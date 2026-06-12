@@ -81,9 +81,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "description", content: "Browse thousands of verified used cars from trusted dealers across India. AutoHub India connects buyers with 500+ verified dealers." },
       { name: "author", content: "AutoHub India" },
       { property: "og:title", content: "AutoHub India — India's Trusted Used Car Dealer Marketplace" },
-      { property: "og:description", content: "Browse thousands of verified used cars from trusted dealers across India." },
+      { property: "og:description", content: "Browse thousands of verified used cars from trusted dealers across India. AutoHub India connects buyers with 500+ verified dealers." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
+      { name: "twitter:title", content: "AutoHub India — India's Trusted Used Car Dealer Marketplace" },
+      { name: "twitter:description", content: "Browse thousands of verified used cars from trusted dealers across India. AutoHub India connects buyers with 500+ verified dealers." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/7480a5cd-09f2-45c9-8e1b-fea990c674f2/id-preview-7def1067--1ba49e1b-9fcb-4281-a6b9-a09e1b7c962f.lovable.app-1781232436079.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/7480a5cd-09f2-45c9-8e1b-fea990c674f2/id-preview-7def1067--1ba49e1b-9fcb-4281-a6b9-a09e1b7c962f.lovable.app-1781232436079.png" },
     ],
     links: [
       {
