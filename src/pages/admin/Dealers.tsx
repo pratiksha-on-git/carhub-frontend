@@ -6,7 +6,7 @@ import { Check, Ban, X, Trash2 } from "lucide-react";
 import { dealerService } from "@/services/dealerService";
 import { useState } from "react";
 import { toast } from "sonner";
-import type { DealerStatus } from "@/types";
+import type { Dealer, DealerStatus } from "@/types";
 
 const variant: Record<DealerStatus, string> = {
   Approved: "bg-success/15 text-success",
@@ -18,7 +18,7 @@ const variant: Record<DealerStatus, string> = {
 export default function AdminDealers() {
   const [, force] = useState(0);
   const dealers = dealerService.list();
-  const act = (id: string, patch: Partial<{ status: DealerStatus }>, msg: string) => {
+  const act = (id: string, patch: Partial<Dealer>, msg: string) => {
     dealerService.update(id, patch); toast.success(msg); force((n) => n + 1);
   };
   return (
