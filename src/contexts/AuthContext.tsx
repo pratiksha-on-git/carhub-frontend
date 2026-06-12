@@ -1,38 +1,87 @@
-import { createContext, useContext, useState, useCallback, type ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useState,
+  useCallback,
+  useEffect,
+  type ReactNode,
+} from "react";
 import type { AuthUser } from "@/types";
 
 interface AuthContextValue {
   user: AuthUser | null;
-  loginAsDealer: () => void;
-  loginAsAdmin: () => void;
-  login: (email: string, password: string) => { ok: boolean; role?: AuthUser["role"] };
+  /** Called after a successful real API login — builds AuthUser from decoded JWT */
+  setUserFromToken: (role: AuthUser["role"], decoded: Record<string, unknown>) => void;
   logout: () => void;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
-export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<AuthUser | null>(null);
+/** Build an AuthUser from a decoded JWT payload */
+function buildUser(
+  role: AuthUser["role"],
+  decoded: Record<string, unknown>,
+): AuthUser {
+  return {
+    id: String(decoded.id ?? decoded.sub ?? ""),
+    name: String(
+      decoded.businessName ??
+      decoded.ownerName ??
+      decoded.name ??
+      decoded.email ??
+      role,
+    ),
+    email: String(decoded.email ?? decoded.sub ?? ""),
+    role,
+    dealerId: decoded.dealerId ? String(decoded.dealerId) : undefined,
+  };
+}
 
-  const loginAsDealer = useCallback(() => {
-    setUser({ id: "u-dealer", name: "Rajesh Sharma", email: "dealer@autohub.in", role: "dealer", dealerId: "d1" });
-  }, []);
-  const loginAsAdmin = useCallback(() => {
-    setUser({ id: "u-admin", name: "Admin", email: "admin@autohub.in", role: "admin" });
-  }, []);
-
-  const login = useCallback((email: string, _password: string) => {
-    if (email === "admin@autohub.in") {
-      setUser({ id: "u-admin", name: "Admin", email, role: "admin" });
-      return { ok: true, role: "admin" as const };
+/** Try to restore session from localStorage on page load */
+function restoreUser(): AuthUser | null {
+  try {
+    // Try admin first
+    const adminData = localStorage.getItem("adminData");
+    if (adminData) {
+      return buildUser("admin", JSON.parse(adminData));
     }
-    setUser({ id: "u-dealer", name: "Rajesh Sharma", email, role: "dealer", dealerId: "d1" });
-    return { ok: true, role: "dealer" as const };
+    // Then dealer
+    const dealerData = localStorage.getItem("dealerData");
+    if (dealerData) {
+      return buildUser("dealer", JSON.parse(dealerData));
+    }
+  } catch {
+    // corrupted storage
+  }
+  return null;
+}
+
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const [user, setUser] = useState<AuthUser | null>(restoreUser);
+
+  // Keep session alive across refreshes
+  useEffect(() => {
+    const restored = restoreUser();
+    if (restored) setUser(restored);
   }, []);
 
-  const logout = useCallback(() => setUser(null), []);
+  const setUserFromToken = useCallback(
+    (role: AuthUser["role"], decoded: Record<string, unknown>) => {
+      setUser(buildUser(role, decoded));
+    },
+    [],
+  );
+
+  const logout = useCallback(() => {
+    localStorage.removeItem("adminToken");
+    localStorage.removeItem("adminData");
+    localStorage.removeItem("dealerToken");
+    localStorage.removeItem("dealerData");
+    setUser(null);
+  }, []);
+
   return (
-    <AuthContext.Provider value={{ user, loginAsDealer, loginAsAdmin, login, logout }}>
+    <AuthContext.Provider value={{ user, setUserFromToken, logout }}>
       {children}
     </AuthContext.Provider>
   );

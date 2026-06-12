@@ -10,6 +10,21 @@ import {
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
+  Upload,
+
+  User,
+  ReceiptText,
+  BriefcaseBusiness,
+
+  MessageCircle,
+  Mail,
+  Lock,
+  Eye,
+  EyeOff,
+  MapPinned,
+  Building,
+  Map,
+  LocateFixed,
 } from "lucide-react";
 
 import { Card, CardContent } from "@/components/ui/card";
@@ -17,14 +32,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Progress } from "@/components/ui/progress";
 import { SEO } from "@/components/shared/SEO";
+import { useRegister, ApiError } from "@/hooks/auth/register";
 import { toast } from "sonner";
 type FormData = {
   businessName: string;
   ownerName: string;
   gstNumber: string;
-  experience: string;
+  yearsInBusiness: string;
   email: string;
   mobile: string;
   whatsapp: string;
@@ -32,6 +47,7 @@ type FormData = {
   address: string;
   city: string;
   state: string;
+  pinCode: string;
 };
 
 
@@ -40,14 +56,17 @@ export default function Register() {
   const navigate = useNavigate();
 
   const [step, setStep] = useState(0);
-
+  const [dealerLogoName, setDealerLogoName] = useState("");
+  const [showroomImageName, setShowroomImageName] = useState("");
+  const formRef = React.useRef<HTMLFormElement>(null);
+  const { isSubmitting, registerDealer } = useRegister();
+  const [showPassword, setShowPassword] = useState(false);
   const form = useForm<FormData>({
-
     defaultValues: {
       businessName: "",
       ownerName: "",
       gstNumber: "",
-      experience: "",
+      yearsInBusiness: "",
       email: "",
       mobile: "",
       whatsapp: "",
@@ -55,6 +74,7 @@ export default function Register() {
       address: "",
       city: "",
       state: "",
+      pinCode: "",
     },
   });
 
@@ -64,13 +84,57 @@ export default function Register() {
 
   const progress = ((step + 1) / 4) * 100;
 
-  const onSubmit = () => {
-    toast.success("Application submitted!", {
-      description:
-        "Status: Pending Approval. We'll email you within 24 hours.",
-    });
+  const onSubmit = async (data: FormData) => {
+    try {
+      await registerDealer({
+        businessName: data.businessName,
+        ownerName: data.ownerName,
+        gstNumber: data.gstNumber,
+        yearsInBusiness: Number(data.yearsInBusiness),
+        mobile: data.mobile,
+        whatsapp: data.whatsapp,
+        email: data.email,
+        password: data.password,
+        address: data.address,
+        city: data.city,
+        state: data.state,
+        pinCode: data.pinCode,
+        dealerId:
+          typeof crypto !== "undefined" && "randomUUID" in crypto
+            ? crypto.randomUUID()
+            : `dealer-${Date.now()}`,
+        dealerLogo: dealerLogoName || "dealer-logo.png",
+        showroomImage: showroomImageName || "showroom-image.jpg",
+      });
 
-    navigate("/auth/login");
+      toast.success("Registration Successful! 🎉", {
+        description: "Status: Pending Approval. We'll email you within 24 hours.",
+      });
+
+      navigate("/auth/login");
+    } catch (error) {
+      console.error(error);
+
+      if (error instanceof ApiError) {
+        if (error.fieldErrors && Object.keys(error.fieldErrors).length > 0) {
+          // Show each field validation error as a separate toast
+          Object.entries(error.fieldErrors).forEach(([field, message]) => {
+            const label = field
+              .replace(/([A-Z])/g, " $1")
+              .replace(/^./, (s) => s.toUpperCase());
+            toast.error(`${label}: ${message}`, { duration: 6000 });
+          });
+        } else {
+          // Single API-level error (e.g. "Mobile Number Already Exists")
+          toast.error(error.message, {
+
+            duration: 6000,
+          });
+        }
+      } else {
+        toast.error("Registration failed. Please check your connection and try again.");
+      }
+    }
   };
 
   const steps = [
@@ -112,10 +176,10 @@ export default function Register() {
 
             <div className="mt-6 flex flex-col gap-6 xl:flex-row xl:items-center xl:justify-between">
               <div className="max-w-3xl">
-                <h1 className="text-4xl font-black tracking-tight text-slate-950 sm:text-5xl">
+                <h1 className="text-4xl font-black tracking-tight text-slate-950 ">
                   Grow your dealership with AutoHub India
                 </h1>
-                <p className="mt-4 text-lg text-slate-600 sm:text-xl">
+                <p className="mt-4 text-lg text-slate-600 ">
                   Get verified, list inventory and start receiving quality buyer leads in under 24 hours.
                 </p>
               </div>
@@ -136,55 +200,52 @@ export default function Register() {
           <div className="grid gap-6 xl:grid-cols-[1fr_320px]">
             <Card className="rounded-[2rem] border border-slate-200 bg-white shadow-sm">
               <CardContent className="p-6 sm:p-8">
-              <div className="mb-8">
-  <div className="flex items-center">
-    {steps.map((item, index) => {
-      const Icon = item.icon;
-      const active = step === index;
-      const completed = step > index;
+                <div className="mb-8">
+                  <div className="flex items-center">
+                    {steps.map((item, index) => {
+                      const Icon = item.icon;
+                      const active = step === index;
+                      const completed = step > index;
 
-      return (
-        <React.Fragment key={item.label}>
-          <button
-            type="button"
-            onClick={() => setStep(index)}
-            className={`
-              flex items-center gap-2 rounded-full border px-5 py-2 text-sm font-medium transition-all
-              ${
-                active
-                  ? "bg-blue-600 border-blue-600 text-white shadow-sm"
-                  : completed
-                  ? "bg-blue-50 border-blue-200 text-blue-700"
-                  : "bg-white border-slate-200 text-slate-500"
-              }
+                      return (
+                        <React.Fragment key={item.label}>
+                          <div
+                            className={`
+              flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm font-medium transition-all
+              ${active
+                                ? "bg-blue-600 border-blue-600 text-white shadow-sm"
+                                : completed
+                                  ? "bg-green-50 border-green-400 text-green-700"
+                                  : "bg-white border-slate-200 text-slate-500"
+                              }
             `}
-          >
-            <Icon size={15} />
-            <span>{item.label}</span>
-          </button>
+                          >
+                            {completed ? <CheckCircle2 size={15} /> : <Icon size={15} />}
+                            <span>{item.label}</span>
+                          </div>
 
-          {index < steps.length - 1 && (
-            <div className="flex-1 mx-3 h-px bg-slate-300" />
-          )}
-        </React.Fragment>
-      );
-    })}
-  </div>
+                          {index < steps.length - 1 && (
+                            <div className="flex-1 mx-3 h-px bg-slate-300" />
+                          )}
+                        </React.Fragment>
+                      );
+                    })}
+                  </div>
 
-  {/* Progress Line */}
-  <div className="mt-4">
-    <div className="h-1 bg-slate-200 rounded-full overflow-hidden">
-      <div
-        className="h-full gradient-primary transition-all duration-300"
-        style={{
-          width: `${((step + 1) / steps.length) * 100}%`,
-        }}
-      />
-    </div>
-  </div>
-</div>
+                  {/* Progress Line */}
+                  <div className="mt-4">
+                    <div className="h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                      <div
+                        className="h-full gradient-primary transition-all duration-300"
+                        style={{
+                          width: `${((step + 1) / steps.length) * 100}%`,
+                        }}
+                      />
+                    </div>
+                  </div>
+                </div>
 
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+                <form ref={formRef} onSubmit={(e) => e.preventDefault()} className="space-y-8">
                   {step === 0 && (
                     <div className="space-y-6">
                       <div>
@@ -193,28 +254,79 @@ export default function Register() {
                       </div>
 
                       <div className="grid gap-5 sm:grid-cols-2">
-                        <Field
-                          label="Business Name *"
-                          placeholder="e.g. Mumbai Premium Motors"
-                          error={errors.businessName?.message as string}
-                          {...form.register("businessName")}
-                        />
-                        <Field
-                          label="Owner Name *"
-                          placeholder="Full name"
-                          error={errors.ownerName?.message as string}
-                          {...form.register("ownerName")}
-                        />
-                        <Field
-                          label="GST Number"
-                          placeholder="22AAAAA0000A1Z5"
-                          {...form.register("gstNumber")}
-                        />
-                        <Field
-                          label="Years in business"
-                          placeholder="5 Years"
-                          {...form.register("experience")}
-                        />
+                        {/* Business Name */}
+                        <div>
+                          <Label className="mb-2 block">
+                            Business Name <span className="text-red-500">*</span>
+                          </Label>
+
+                          <div className="relative">
+                            <Building2 className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+
+                            <Input
+                              required
+                              placeholder="e.g. Mumbai Premium Motors"
+                              className="h-12 pl-12 rounded-xl"
+                              {...form.register("businessName")}
+                            />
+                          </div>
+                        </div>
+
+                        {/* Owner Name */}
+                        <div>
+                          <Label className="mb-2 block">
+                            Owner Name <span className="text-red-500">*</span>
+                          </Label>
+
+                          <div className="relative">
+                            <User className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+
+                            <Input
+                              required
+                              placeholder="Full name"
+                              className="h-12 pl-12 rounded-xl"
+                              {...form.register("ownerName")}
+                            />
+                          </div>
+                        </div>
+
+                        {/* GST Number */}
+                        <div>
+                          <Label className="mb-2 block">
+                            GST Number <span className="text-red-500">*</span>
+                          </Label>
+
+                          <div className="relative">
+                            <ReceiptText className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+
+                            <Input
+                              required
+                              placeholder="22AAAAA0000A1Z5"
+                              className="h-12 pl-12 rounded-xl uppercase"
+                              {...form.register("gstNumber")}
+                            />
+                          </div>
+                        </div>
+
+                        {/* Years in Business */}
+                        <div>
+                          <Label className="mb-2 block">
+                            Years in Business <span className="text-red-500">*</span>
+                          </Label>
+
+                          <div className="relative">
+                            <BriefcaseBusiness className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+
+                            <Input
+                              type="number"
+                              required
+                              min={0}
+                              placeholder="5"
+                              className="h-12 pl-12 rounded-xl"
+                              {...form.register("yearsInBusiness")}
+                            />
+                          </div>
+                        </div>
                       </div>
                     </div>
                   )}
@@ -227,28 +339,94 @@ export default function Register() {
                       </div>
 
                       <div className="grid gap-5 sm:grid-cols-2">
-                        <Field
-                          label="Mobile Number"
-                          error={errors.mobile?.message as string}
-                          {...form.register("mobile")}
-                        />
-                        <Field
-                          label="WhatsApp Number"
-                          error={errors.whatsapp?.message as string}
-                          {...form.register("whatsapp")}
-                        />
-                        <Field
-                          label="Email"
-                          type="email"
-                          error={errors.email?.message as string}
-                          {...form.register("email")}
-                        />
-                        <Field
-                          label="Password"
-                          type="password"
-                          error={errors.password?.message as string}
-                          {...form.register("password")}
-                        />
+                        {/* Mobile Number */}
+                        <div>
+                          <Label className="mb-2 block">
+                            Mobile Number <span className="text-red-500">*</span>
+                          </Label>
+
+                          <div className="relative">
+                            <Phone className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+
+                            <Input
+                              required
+                              maxLength={10}
+                              placeholder="e.g. 9876543210"
+                              className="h-12 pl-12 rounded-xl"
+                              {...form.register("mobile")}
+                            />
+                          </div>
+                        </div>
+
+                        {/* WhatsApp Number */}
+                        <div>
+                          <Label className="mb-2 block">
+                            WhatsApp Number <span className="text-red-500">*</span>
+                          </Label>
+
+                          <div className="relative">
+                            <MessageCircle className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+
+                            <Input
+                              required
+                              maxLength={10}
+                              placeholder="e.g. 9876543210"
+                              className="h-12 pl-12 rounded-xl"
+                              {...form.register("whatsapp")}
+                            />
+                          </div>
+                        </div>
+
+                        {/* Email */}
+                        <div>
+                          <Label className="mb-2 block">
+                            Email <span className="text-red-500">*</span>
+                          </Label>
+
+                          <div className="relative">
+                            <Mail className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+
+                            <Input
+                              type="email"
+                              required
+                              placeholder="Enter email address"
+                              className="h-12 pl-12 rounded-xl"
+                              {...form.register("email")}
+                            />
+                          </div>
+                        </div>
+
+                        {/* Password */}
+                        <div>
+                          <Label className="mb-2 block">
+                            Password <span className="text-red-500">*</span>
+                          </Label>
+
+                          <div className="relative">
+                            <Lock className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+
+                            <Input
+                              type={showPassword ? "text" : "password"}
+                              required
+                              minLength={6}
+                              placeholder="Minimum 6 characters"
+                              className="h-12 pl-12 pr-12 rounded-xl"
+                              {...form.register("password")}
+                            />
+
+                            <button
+                              type="button"
+                              onClick={() => setShowPassword(!showPassword)}
+                              className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-blue-600"
+                            >
+                              {showPassword ? (
+                                <EyeOff className="h-5 w-5" />
+                              ) : (
+                                <Eye className="h-5 w-5" />
+                              )}
+                            </button>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   )}
@@ -261,29 +439,89 @@ export default function Register() {
                       </div>
 
                       <div className="space-y-5">
+                        {/* Address */}
                         <div>
-                          <Label className="text-slate-700">Address</Label>
-                          <Textarea
-                            rows={4}
-                            className="mt-2 rounded-3xl border border-slate-200 bg-white text-slate-900 shadow-sm"
-                            {...form.register("address")}
-                          />
-                          {errors.address && (
-                            <p className="mt-2 text-sm text-red-600">{errors.address.message as string}</p>
-                          )}
+                          <Label className="mb-2 block">
+                            Address <span className="text-red-500">*</span>
+                          </Label>
+
+                          <div className="relative">
+                            <MapPinned className="absolute left-4 top-4 h-5 w-5 text-slate-400" />
+
+                            <Textarea
+                              rows={4}
+                              required
+                              placeholder="Enter complete business address"
+                              className="
+          pl-12
+          rounded-xl
+          border-slate-200
+          bg-white
+          shadow-sm
+          resize-none
+          focus-visible:ring-2
+          focus-visible:ring-blue-500
+          focus-visible:ring-offset-0
+        "
+                              {...form.register("address")}
+                            />
+                          </div>
                         </div>
 
+                        {/* City & State */}
                         <div className="grid gap-5 sm:grid-cols-2">
-                          <Field
-                            label="City"
-                            error={errors.city?.message as string}
-                            {...form.register("city")}
-                          />
-                          <Field
-                            label="State"
-                            error={errors.state?.message as string}
-                            {...form.register("state")}
-                          />
+                          <div>
+                            <Label className="mb-2 block">
+                              City <span className="text-red-500">*</span>
+                            </Label>
+
+                            <div className="relative">
+                              <Building className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+
+                              <Input
+                                required
+                                placeholder="e.g. Pune"
+                                className="h-12 pl-12 rounded-xl"
+                                {...form.register("city")}
+                              />
+                            </div>
+                          </div>
+
+                          <div>
+                            <Label className="mb-2 block">
+                              State <span className="text-red-500">*</span>
+                            </Label>
+
+                            <div className="relative">
+                              <Map className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+
+                              <Input
+                                required
+                                placeholder="e.g. Maharashtra"
+                                className="h-12 pl-12 rounded-xl"
+                                {...form.register("state")}
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Pin Code */}
+                        <div>
+                          <Label className="mb-2 block">
+                            Pin Code <span className="text-red-500">*</span>
+                          </Label>
+
+                          <div className="relative">
+                            <LocateFixed className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+
+                            <Input
+                              required
+                              maxLength={6}
+                              placeholder="411004"
+                              className="h-12 pl-12 rounded-xl"
+                              {...form.register("pinCode")}
+                            />
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -292,38 +530,66 @@ export default function Register() {
                   {step === 3 && (
                     <div className="space-y-6">
                       <div>
-                        <h2 className="text-2xl font-bold text-slate-950">Upload media</h2>
-                        <p className="mt-2 text-slate-600">Showcase your dealership professionally.</p>
+                        <h2 className="text-2xl font-bold text-slate-950">Add your brand visuals</h2>
+                        <p className="mt-2 text-slate-600">A great logo & showroom photo build trust with buyers.</p>
                       </div>
 
                       <div className="grid gap-5 sm:grid-cols-2">
                         <div>
-                          <Label className="text-slate-700">Dealer Logo</Label>
-                          <Input
-                            type="file"
-                            accept="image/*"
-                            className="mt-2 rounded-3xl border border-slate-200 bg-white text-slate-900"
-                          />
+                          <Label className="text-slate-700 font-semibold">Dealer Logo</Label>
+                          <label
+                            htmlFor="dealer-logo-input"
+                            className="mt-2 flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50/50 px-6 py-10 text-center transition-colors hover:border-blue-400 hover:bg-blue-50/30"
+                          >
+                            <Upload className="mb-2 h-6 w-6 text-slate-400" />
+                            <span className="text-sm font-medium text-slate-600">
+                              {dealerLogoName || "Click or drag to upload"}
+                            </span>
+                            <span className="mt-1 text-xs text-slate-400">PNG/JPG, square, min 256px</span>
+                            <input
+                              id="dealer-logo-input"
+                              type="file"
+                              accept="image/*"
+                              className="sr-only"
+                              onChange={(event) =>
+                                setDealerLogoName(event.target.files?.[0]?.name ?? "")
+                              }
+                            />
+                          </label>
                         </div>
                         <div>
-                          <Label className="text-slate-700">Showroom Image</Label>
-                          <Input
-                            type="file"
-                            accept="image/*"
-                            className="mt-2 rounded-3xl border border-slate-200 bg-white text-slate-900"
-                          />
+                          <Label className="text-slate-700 font-semibold">Showroom Image</Label>
+                          <label
+                            htmlFor="showroom-image-input"
+                            className="mt-2 flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50/50 px-6 py-10 text-center transition-colors hover:border-blue-400 hover:bg-blue-50/30"
+                          >
+                            <Upload className="mb-2 h-6 w-6 text-slate-400" />
+                            <span className="text-sm font-medium text-slate-600">
+                              {showroomImageName || "Click or drag to upload"}
+                            </span>
+                            <span className="mt-1 text-xs text-slate-400">PNG/JPG, landscape, min 1200px</span>
+                            <input
+                              id="showroom-image-input"
+                              type="file"
+                              accept="image/*"
+                              className="sr-only"
+                              onChange={(event) =>
+                                setShowroomImageName(event.target.files?.[0]?.name ?? "")
+                              }
+                            />
+                          </label>
                         </div>
                       </div>
                     </div>
                   )}
 
-                  <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5 shadow-sm sm:flex sm:items-center sm:justify-between">
+                  <div className=" border-t pt-4 sm:flex sm:items-center sm:justify-between">
                     <Button
                       type="button"
                       variant="outline"
                       disabled={step === 0}
                       onClick={() => setStep(step - 1)}
-                      className="w-full justify-center sm:w-auto"
+                      className="w-full justify-center  bg-slate-100 border border-slate-300 text-black hover:bg-slate-200 sm:w-auto"
                     >
                       <ChevronLeft className="h-4 w-4 mr-2" />
                       Back
@@ -336,7 +602,10 @@ export default function Register() {
                     {step < 3 ? (
                       <Button
                         type="button"
-                        onClick={() => setStep(step + 1)}
+                        onClick={() => {
+                          if (formRef.current?.reportValidity()) setStep(step + 1);
+                        }}
+                        disabled={isSubmitting}
                         className="mt-4 w-full gradient-primary text-white hover:gradient-primary-hover sm:mt-0 sm:w-auto"
                       >
                         Continue
@@ -344,10 +613,12 @@ export default function Register() {
                       </Button>
                     ) : (
                       <Button
-                        type="submit"
+                        type="button"
+                        disabled={isSubmitting}
+                        onClick={form.handleSubmit(onSubmit)}
                         className="mt-4 w-full gradient-primary text-white hover:gradient-primary-hover sm:mt-0 sm:w-auto"
                       >
-                        Submit Application
+                        {isSubmitting ? "Registering..." : "Register"}
                       </Button>
                     )}
                   </div>
@@ -401,7 +672,8 @@ export default function Register() {
         </div>
       </div>
     </>
-);}
+  );
+}
 
 function Field({
   label,

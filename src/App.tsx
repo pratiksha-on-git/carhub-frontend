@@ -34,23 +34,7 @@ import AdminSubscriptions from "@/pages/admin/Subscriptions";
 import AdminAdvertisements from "@/pages/admin/Advertisements";
 import AdminReports from "@/pages/admin/Reports";
 
-/**
- * Demo helper: when arriving at /dealer or /admin without a session,
- * auto-sign-in as the matching role so the dashboards are explorable.
- */
-function DemoAuthBridge({ role, children }: { role: "dealer" | "admin"; children: React.ReactNode }) {
-  const { user, loginAsDealer, loginAsAdmin } = useAuth();
-  const navigate = useNavigate();
-  useEffect(() => {
-    if (!user) {
-      if (role === "dealer") loginAsDealer();
-      else loginAsAdmin();
-    } else if (user.role !== role) {
-      navigate("/auth/login", { replace: true });
-    }
-  }, [user, role, loginAsDealer, loginAsAdmin, navigate]);
-  return <>{children}</>;
-}
+
 
 export default function App() {
   return (
@@ -71,35 +55,36 @@ export default function App() {
           <Route path="/auth/login" element={<Login />} />
           <Route path="/auth/register" element={<Register />} />
 
-          {/* Dealer (demo-auto-login for showcase) */}
-          <Route path="/dealer" element={<DemoAuthBridge role="dealer"><DealerLayout /></DemoAuthBridge>}>
-            <Route index element={<Navigate to="/dealer/dashboard" replace />} />
-            <Route path="dashboard" element={<DealerDashboard />} />
-            <Route path="vehicles" element={<DealerVehicles />} />
-            <Route path="vehicles/add" element={<DealerVehicleForm />} />
-            <Route path="vehicles/edit/:id" element={<DealerVehicleForm />} />
-            <Route path="leads" element={<DealerLeads />} />
-            <Route path="profile" element={<DealerProfile />} />
-            <Route path="analytics" element={<DealerAnalytics />} />
-            <Route path="subscription" element={<DealerSubscription />} />
+          {/* Dealer */}
+          <Route element={<ProtectedRoute allow={["dealer"]} />}>
+            <Route path="/dealer" element={<DealerLayout />}>
+              <Route index element={<Navigate to="/dealer/dashboard" replace />} />
+              <Route path="dashboard" element={<DealerDashboard />} />
+              <Route path="vehicles" element={<DealerVehicles />} />
+              <Route path="vehicles/add" element={<DealerVehicleForm />} />
+              <Route path="vehicles/edit/:id" element={<DealerVehicleForm />} />
+              <Route path="leads" element={<DealerLeads />} />
+              <Route path="profile" element={<DealerProfile />} />
+              <Route path="analytics" element={<DealerAnalytics />} />
+              <Route path="subscription" element={<DealerSubscription />} />
+            </Route>
           </Route>
 
           {/* Admin */}
-          <Route path="/admin" element={<DemoAuthBridge role="admin"><AdminLayout /></DemoAuthBridge>}>
-            <Route index element={<Navigate to="/admin/dashboard" replace />} />
-            <Route path="dashboard" element={<AdminDashboard />} />
-            <Route path="dealers" element={<AdminDealers />} />
-            <Route path="vehicles" element={<AdminVehicles />} />
-            <Route path="leads" element={<AdminLeads />} />
-            <Route path="subscriptions" element={<AdminSubscriptions />} />
-            <Route path="advertisements" element={<AdminAdvertisements />} />
-            <Route path="reports" element={<AdminReports />} />
+          <Route element={<ProtectedRoute allow={["admin"]} />}>
+            <Route path="/admin" element={<AdminLayout />}>
+              <Route index element={<Navigate to="/admin/dashboard" replace />} />
+              <Route path="dashboard" element={<AdminDashboard />} />
+              <Route path="dealers" element={<AdminDealers />} />
+              <Route path="vehicles" element={<AdminVehicles />} />
+              <Route path="leads" element={<AdminLeads />} />
+              <Route path="subscriptions" element={<AdminSubscriptions />} />
+              <Route path="advertisements" element={<AdminAdvertisements />} />
+              <Route path="reports" element={<AdminReports />} />
+            </Route>
           </Route>
 
-          {/* Real protected (used after explicit login) */}
-          <Route element={<ProtectedRoute allow={["dealer"]} />}>
-            {/* future protected dealer-only routes */}
-          </Route>
+
 
           {/* 404 inside the public layout shell */}
           <Route element={<PublicLayout />}>

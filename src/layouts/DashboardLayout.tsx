@@ -4,7 +4,30 @@ import { Car, LogOut, Menu, X } from "lucide-react";
 import { useState, useEffect, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { useAuth } from "@/contexts/AuthContext";
+
+/** Read logged-in user's display name from localStorage */
+function getLoggedInName(): string {
+  try {
+    const adminRaw = localStorage.getItem("adminData");
+    if (adminRaw) {
+      const d = JSON.parse(adminRaw);
+      return String(d.fullName ?? d.name ?? d.email ?? "Admin");
+    }
+    const dealerRaw = localStorage.getItem("dealerData");
+    if (dealerRaw) {
+      const d = JSON.parse(dealerRaw);
+      return String(d.businessName ?? d.ownerName ?? d.name ?? d.email ?? "Dealer");
+    }
+  } catch { /* ignore */ }
+  return "";
+}
+
+function clearAuth() {
+  localStorage.removeItem("adminToken");
+  localStorage.removeItem("adminData");
+  localStorage.removeItem("dealerToken");
+  localStorage.removeItem("dealerData");
+}
 
 export interface NavItem { to: string; label: string; icon: ReactNode; }
 
@@ -17,9 +40,14 @@ interface Props {
 export default function DashboardLayout({ title, nav, accentLabel }: Props) {
   const { pathname } = useLocation();
   const [open, setOpen] = useState(false);
-  const { user, logout } = useAuth();
+  const displayName = getLoggedInName();
   const navigate = useNavigate();
   useEffect(() => { setOpen(false); }, [pathname]);
+
+  const handleLogout = () => {
+    clearAuth();
+    navigate("/auth/login", { replace: true });
+  };
 
   const SidebarBody = () => (
     <div className="flex h-full flex-col bg-card">
@@ -52,9 +80,9 @@ export default function DashboardLayout({ title, nav, accentLabel }: Props) {
       </nav>
       <div className="p-3 border-t border-border">
         <div className="px-2 py-2 text-xs text-muted-foreground">
-          Signed in as<br /><span className="font-semibold text-foreground">{user?.name}</span>
+          Signed in as<br /><span className="font-semibold text-foreground">{displayName}</span>
         </div>
-        <Button variant="ghost" className="w-full justify-start gap-2 text-destructive" onClick={() => { logout(); navigate("/"); }}>
+        <Button variant="ghost" className="w-full justify-start gap-2 text-destructive" onClick={handleLogout}>
           <LogOut className="h-4 w-4" /> Logout
         </Button>
       </div>

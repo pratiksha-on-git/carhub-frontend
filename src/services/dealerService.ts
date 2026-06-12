@@ -9,5 +9,7 @@ export const dealerService = {
   update: (id: string, patch: Partial<Dealer>) => {
     store = store.map((d) => (d.id === id ? { ...d, ...patch } : d));
   },
-  add: (d: Dealer) => { store = [...store, d]; },
+  add: (d: Dealer) => {
+    store = [...store, d];
+  },
 };
