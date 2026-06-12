@@ -101,12 +101,10 @@ export default function App() {
             {/* future protected dealer-only routes */}
           </Route>
 
-          <Route path="*" element={
-            <PublicLayout>
-              {/* fallback inside layout via outlet not used; render NotFound via element-only */}
-            </PublicLayout>
-          } />
-          <Route path="*" element={<NotFound />} />
+          {/* 404 inside the public layout shell */}
+          <Route element={<PublicLayout />}>
+            <Route path="*" element={<NotFound />} />
+          </Route>
         </Routes>
       </BrowserRouter>
       <Toaster position="top-right" richColors />
