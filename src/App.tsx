@@ -11,7 +11,7 @@ import { ProtectedRoute } from "@/components/shared/ProtectedRoute";
 import Home from "@/pages/public/Home";
 import Cars from "@/pages/public/Cars";
 import CarDetails from "@/pages/public/CarDetails";
-
+import Wishlist from "@/pages/public/Wishlist";
 import Contact from "@/pages/public/Contact";
 import Login from "@/pages/auth/Login";
 import Register from "@/pages/auth/Register";
@@ -30,7 +30,7 @@ import AdminDealers from "@/pages/admin/Dealers";
 import AdminVehicles from "@/pages/admin/Vehicles";
 import AdminLeads from "@/pages/admin/Leads";
 import AdminSubscriptions from "@/pages/admin/Subscriptions";
-import AdminAdvertisements from "@/pages/admin/Advertisements";
+
 import AdminReports from "@/pages/admin/Reports";
 
 
@@ -45,7 +45,7 @@ export default function App() {
             <Route index element={<Home />} />
             <Route path="/cars" element={<Cars />} />
             <Route path="/car/:id" element={<CarDetails />} />
-
+            <Route path="/wishlist" element={<Wishlist />} />
             <Route path="/contact" element={<Contact />} />
           </Route>
 
@@ -76,7 +76,7 @@ export default function App() {
               <Route path="vehicles" element={<AdminVehicles />} />
               <Route path="leads" element={<AdminLeads />} />
               <Route path="subscriptions" element={<AdminSubscriptions />} />
-              <Route path="advertisements" element={<AdminAdvertisements />} />
+              
               <Route path="reports" element={<AdminReports />} />
             </Route>
           </Route>

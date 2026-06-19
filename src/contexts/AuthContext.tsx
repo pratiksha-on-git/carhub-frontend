@@ -43,19 +43,16 @@ function buildUser(
 /** Try to restore session from localStorage on page load */
 function restoreUser(): AuthUser | null {
   try {
-    // Try admin first
-    const adminData = localStorage.getItem("adminData");
-    if (adminData) {
-      return buildUser("admin", JSON.parse(adminData));
+    const path = window.location.pathname;
+    if (path.startsWith("/admin")) {
+      const adminData = localStorage.getItem("adminData");
+      if (adminData) return buildUser("admin", JSON.parse(adminData));
     }
-    // Then dealer
     const dealerData = localStorage.getItem("dealerData");
-    if (dealerData) {
-      return buildUser("dealer", JSON.parse(dealerData));
-    }
-  } catch {
-    // corrupted storage
-  }
+    if (dealerData) return buildUser("dealer", JSON.parse(dealerData));
+    const adminData = localStorage.getItem("adminData");
+    if (adminData) return buildUser("admin", JSON.parse(adminData));
+  } catch { /* corrupted storage */ }
   return null;
 }
 
@@ -80,26 +77,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const setUserFromToken = useCallback(
     (role: AuthUser["role"], decoded: Record<string, unknown>) => {
+      // Always set the in-memory user to the one just logged in
       setUser(buildUser(role, decoded));
     },
     [],
   );
 
   const logout = useCallback(async () => {
-    const token =
-      localStorage.getItem('dealerToken') ?? localStorage.getItem('adminToken') ?? '';
+    const isAdmin = user?.role === "admin";
+    const token = isAdmin
+      ? localStorage.getItem("adminToken")
+      : localStorage.getItem("dealerToken");
     try {
       await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/auth/logout`, {
         method: 'POST',
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
     } catch { /* ignore network errors — clear session regardless */ }
-    localStorage.removeItem("adminToken");
-    localStorage.removeItem("adminData");
-    localStorage.removeItem("dealerToken");
-    localStorage.removeItem("dealerData");
+    if (isAdmin) {
+      localStorage.removeItem("adminToken");
+      localStorage.removeItem("adminData");
+    } else {
+      localStorage.removeItem("dealerToken");
+      localStorage.removeItem("dealerData");
+    }
     setUser(null);
-  }, []);
+  }, [user?.role]);
 
   return (
     <AuthContext.Provider value={{ user, setUserFromToken, updateUserFields, logout }}>

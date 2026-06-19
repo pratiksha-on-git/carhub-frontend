@@ -69,14 +69,10 @@ export function useLogin() {
       if (isAdmin) {
         localStorage.setItem("adminToken", token);
         localStorage.setItem("adminData", JSON.stringify(decoded));
-        localStorage.removeItem("dealerToken");
-        localStorage.removeItem("dealerData");
         return { role: "admin" as const, token, data: decoded };
       } else {
         localStorage.setItem("dealerToken", token);
         localStorage.setItem("dealerData", JSON.stringify(decoded));
-        localStorage.removeItem("adminToken");
-        localStorage.removeItem("adminData");
         return { role: "dealer" as const, token, data: decoded };
       }
     } catch (err) {

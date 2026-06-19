@@ -1,26 +1,76 @@
-import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
+import { Link, NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, Car, X, Phone, Mail, MapPin } from "lucide-react";
-import { useState, useEffect } from "react";
+import { Menu, Car, X, Phone, Mail, MapPin, Heart, User, LogOut } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { AuthModal } from "@/components/shared/AuthModal";
+import {
+  getStoredCustomer,
+  clearCustomer,
+  type CustomerUser,
+} from "@/hooks/public/useCustomerAuth";
+import { toast } from "sonner";
 
 const nav = [
   { to: "/", label: "Home" },
   { to: "/cars", label: "Browse Cars" },
-
   { to: "/contact", label: "Contact" },
 ];
 
 export default function PublicLayout() {
   const { pathname } = useLocation();
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
+  const [authOpen, setAuthOpen] = useState(false);
+  const [customer, setCustomer] = useState<CustomerUser | null>(getStoredCustomer);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => { setOpen(false); window.scrollTo(0, 0); }, [pathname]);
+
+  // Close user dropdown on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setUserMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const handleAuthSuccess = (user: CustomerUser) => {
+    setCustomer(user);
+  };
+
+  const handleWishlistClick = () => {
+    if (!customer) {
+      setAuthOpen(true);
+    } else {
+      navigate("/wishlist");
+    }
+  };
+
+  const handleUserClick = () => {
+    if (!customer) {
+      setAuthOpen(true);
+    } else {
+      setUserMenuOpen((v) => !v);
+    }
+  };
+
+  const handleLogout = () => {
+    clearCustomer();
+    setCustomer(null);
+    setUserMenuOpen(false);
+    toast.success("Logged out");
+  };
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <header className="sticky top-0 z-50 glass border-b border-border/60">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 h-16 flex items-center gap-4">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 h-16 flex items-center gap-4 relative">
           <Link to="/" className="flex items-center gap-2 shrink-0">
             <div className="grid h-9 w-9 place-items-center rounded-xl gradient-primary text-white">
               <Car className="h-5 w-5" />
@@ -30,16 +80,14 @@ export default function PublicLayout() {
             </div>
           </Link>
 
-          <nav className="hidden lg:flex items-center gap-1 ml-6">
+          <nav className="hidden lg:flex items-center gap-1 absolute left-1/2 -translate-x-1/2">
             {nav.map((n) => (
               <NavLink
                 key={n.to}
                 to={n.to}
                 end={n.to === "/"}
                 className={({ isActive }) =>
-                  `px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    isActive ? "text-accent bg-accent/10" : "text-foreground/70 hover:text-foreground hover:bg-muted"
-                  }`
+                  `px-3 py-2 rounded-lg text-sm font-medium transition-colors ${isActive ? "text-accent bg-accent/10" : "text-foreground/70 hover:text-foreground hover:bg-muted"}`
                 }
               >
                 {n.label}
@@ -48,12 +96,66 @@ export default function PublicLayout() {
           </nav>
 
           <div className="ml-auto flex items-center gap-2">
+            {/* Wishlist icon */}
+            <button
+              onClick={handleWishlistClick}
+              className="relative h-9 w-9 flex items-center justify-center rounded-lg hover:bg-muted transition-colors"
+              title="Wishlist"
+            >
+              <Heart className="h-5 w-5 text-foreground/70" />
+            </button>
+
+            {/* Customer user icon */}
+            <div className="relative" ref={menuRef}>
+              <button
+                onClick={handleUserClick}
+                className={`h-9 w-9 flex items-center justify-center rounded-full transition-colors overflow-hidden ${
+                  customer
+                    ? "gradient-primary text-white hover:opacity-90"
+                    : "bg-muted hover:bg-accent/10"
+                }`}
+                title={customer ? (customer.customerName || customer.email) : "Login"}
+              >
+                {customer ? (
+                  <span className="text-sm font-bold uppercase leading-none">
+                    {(customer.customerName || customer.email || "U").trim().charAt(0).toUpperCase()}
+                  </span>
+                ) : (
+                  <User className="h-5 w-5 text-foreground/70" />
+                )}
+              </button>
+
+              {/* Dropdown */}
+              {userMenuOpen && customer && (
+                <div className="absolute right-0 top-11 w-52 bg-background border border-border rounded-xl shadow-premium z-50 py-2">
+                  <div className="px-4 py-2 border-b border-border">
+                    <p className="text-sm font-semibold truncate">{customer.customerName || customer.email}</p>
+                    <p className="text-xs text-muted-foreground truncate">{customer.email}</p>
+                  </div>
+                  <button
+                    onClick={() => { navigate("/wishlist"); setUserMenuOpen(false); }}
+                    className="w-full flex items-center gap-2 px-4 py-2 text-sm hover:bg-muted transition-colors"
+                  >
+                    <Heart className="h-4 w-4" /> My Wishlist
+                  </button>
+                  <button
+                    onClick={handleLogout}
+                    className="w-full flex items-center gap-2 px-4 py-2 text-sm text-destructive hover:bg-destructive/10 transition-colors"
+                  >
+                    <LogOut className="h-4 w-4" /> Logout
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Dealer buttons */}
             <Button asChild variant="ghost" size="sm" className="hidden sm:inline-flex">
               <Link to="/auth/login">Dealer Login</Link>
             </Button>
             <Button asChild size="sm" className="hidden sm:inline-flex gradient-primary text-white border-0 hover:opacity-90">
               <Link to="/auth/register">Register Dealer</Link>
             </Button>
+
             <Sheet open={open} onOpenChange={setOpen}>
               <SheetTrigger asChild>
                 <Button variant="ghost" size="icon" className="lg:hidden">
@@ -67,6 +169,12 @@ export default function PublicLayout() {
                       {n.label}
                     </Link>
                   ))}
+                  <button
+                    onClick={() => { setOpen(false); handleWishlistClick(); }}
+                    className="px-3 py-3 rounded-lg hover:bg-muted font-medium text-left flex items-center gap-2"
+                  >
+                    <Heart className="h-4 w-4" /> Wishlist
+                  </button>
                   <div className="h-px bg-border my-3" />
                   <Button asChild variant="outline" className="justify-start">
                     <Link to="/auth/login">Dealer Login</Link>
@@ -109,7 +217,6 @@ export default function PublicLayout() {
             <h4 className="font-bold mb-3">Explore</h4>
             <ul className="space-y-2 text-sm text-white/70">
               <li><Link to="/cars" className="hover:text-white">Browse Cars</Link></li>
-    
               <li><Link to="/auth/register" className="hover:text-white">Dealer Registration</Link></li>
             </ul>
           </div>
@@ -138,6 +245,8 @@ export default function PublicLayout() {
           </div>
         </div>
       </footer>
+
+      <AuthModal open={authOpen} onOpenChange={setAuthOpen} onSuccess={handleAuthSuccess} />
     </div>
   );
 }

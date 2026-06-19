@@ -3,7 +3,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { CarFront, Star, Inbox, Eye, TrendingUp, RefreshCw } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, BarChart, Bar, CartesianGrid } from "recharts";
+import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, BarChart, Bar, CartesianGrid, Legend } from "recharts";
 import { useVehicleViews, useVehicleLeads, useDealerDashboard } from "@/hooks/dealer/useDealerDashboard";
 
 export default function DealerDashboard() {
@@ -84,7 +84,7 @@ export default function DealerDashboard() {
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
                 <Inbox className="h-5 w-5 text-primary" />
-                <h2 className="font-bold text-lg">Monthly Leads</h2>
+                <h2 className="font-bold text-lg">Monthly Leads & Conversions</h2>
               </div>
               <Button variant="outline" size="icon" className="h-8 w-8 rounded-lg" onClick={() => refetchLeads()} disabled={leadsRefetching}>
                 <RefreshCw className={`h-3.5 w-3.5 ${leadsRefetching ? "animate-spin" : ""}`} />
@@ -100,7 +100,9 @@ export default function DealerDashboard() {
                     <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" fontSize={12} />
                     <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
                     <Tooltip />
-                    <Bar dataKey="leads" fill="#2563EB" radius={[6, 6, 0, 0]} />
+                    <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }} />
+                    <Bar dataKey="leads" name="Leads" fill="#2563EB" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="conversions" name="Conversions" fill="#10B981" radius={[4, 4, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>

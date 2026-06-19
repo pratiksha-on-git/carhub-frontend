@@ -1,8 +1,8 @@
+import { useQueries } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
-import { Users, CarFront, Inbox, IndianRupee, Clock } from "lucide-react";
-import { dealerService } from "@/services/dealerService";
-import { vehicleService } from "@/services/vehicleService";
-import { leadService } from "@/services/leadService";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Users, CarFront, Inbox, Clock } from "lucide-react";
+import apiClient from "@/lib/apiClient";
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, LineChart, Line, AreaChart, Area } from "recharts";
 
 const months = [
@@ -15,20 +15,44 @@ const months = [
 ];
 
 export default function AdminDashboard() {
-  const dealers = dealerService.list();
-  const vehicles = vehicleService.list();
-  const leads = leadService.list();
-  const pending = dealers.filter((d) => d.status === "Pending").length;
+  const results = useQueries({
+    queries: [
+      { queryKey: ["admin-count-dealers"],  queryFn: async () => (await apiClient.get("/api/admin/dealer/count")).data },
+      { queryKey: ["admin-count-vehicles"], queryFn: async () => (await apiClient.get("/api/admin/vehicle/count")).data },
+      { queryKey: ["admin-count-pending"],  queryFn: async () => (await apiClient.get("/api/admin/pending/count")).data },
+      { queryKey: ["admin-count-leads"],    queryFn: async () => (await apiClient.get("/api/admin/customer-lead/count")).data },
+    ],
+  });
+
+  const [dealers, vehicles, pending, leads] = results;
+
+  const stats = [
+    { icon: <Users className="h-5 w-5" />,    label: "Total Dealers",  value: dealers.data?.totalDealers,         loading: dealers.isLoading },
+    { icon: <CarFront className="h-5 w-5" />,  label: "Total Vehicles", value: vehicles.data?.totalVehicles,       loading: vehicles.isLoading },
+    { icon: <Clock className="h-5 w-5" />,     label: "Pending",        value: pending.data?.totalPendingDealers,  loading: pending.isLoading, accent: true },
+    { icon: <Inbox className="h-5 w-5" />,     label: "Total Leads",    value: leads.data?.totalCustomerLeads,     loading: leads.isLoading },
+  ];
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
-        <Stat icon={<Users />} label="Dealers" value={dealers.length} />
-        <Stat icon={<Clock />} label="Pending" value={pending} accent />
-        <Stat icon={<CarFront />} label="Vehicles" value={vehicles.length} />
-        <Stat icon={<Inbox />} label="Leads" value={leads.length} />
-        <Stat icon={<IndianRupee />} label="Revenue" value={`₹${(92).toLocaleString("en-IN")}K`} />
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {stats.map((s) => (
+          <Card key={s.label}>
+            <CardContent className="p-5">
+              <div className={`w-10 h-10 grid place-items-center rounded-xl mb-3 ${s.accent ? "bg-warning text-warning-foreground" : "gradient-primary text-white"}`}>
+                {s.icon}
+              </div>
+              {s.loading ? (
+                <Skeleton className="h-8 w-16 mb-1" />
+              ) : (
+                <div className="text-2xl font-black font-display">{s.value ?? "—"}</div>
+              )}
+              <div className="text-xs text-muted-foreground mt-1">{s.label}</div>
+            </CardContent>
+          </Card>
+        ))}
       </div>
+
       <div className="grid lg:grid-cols-3 gap-5">
         <Card><CardContent className="p-6">
           <h2 className="font-display font-bold text-lg mb-3">Dealer Registrations</h2>
@@ -44,15 +68,5 @@ export default function AdminDashboard() {
         </CardContent></Card>
       </div>
     </div>
-  );
-}
-
-function Stat({ icon, label, value, accent }: { icon: React.ReactNode; label: string; value: React.ReactNode; accent?: boolean }) {
-  return (
-    <Card><CardContent className="p-5">
-      <div className={`w-10 h-10 grid place-items-center rounded-xl mb-3 ${accent ? "bg-warning text-warning-foreground" : "gradient-primary text-white"}`}>{icon}</div>
-      <div className="text-2xl font-black font-display">{value}</div>
-      <div className="text-xs text-muted-foreground mt-1">{label}</div>
-    </CardContent></Card>
   );
 }

@@ -7,7 +7,7 @@ const nav = [
   { to: "/admin/vehicles", label: "Vehicles", icon: <CarFront className="h-4 w-4" /> },
   { to: "/admin/leads", label: "Leads", icon: <Inbox className="h-4 w-4" /> },
   { to: "/admin/subscriptions", label: "Subscriptions", icon: <CreditCard className="h-4 w-4" /> },
-  { to: "/admin/advertisements", label: "Advertisements", icon: <Megaphone className="h-4 w-4" /> },
+  
   { to: "/admin/reports", label: "Reports", icon: <FileBarChart className="h-4 w-4" /> },
 ];
 

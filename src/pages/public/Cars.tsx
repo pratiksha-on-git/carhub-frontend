@@ -1,5 +1,7 @@
 import { useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
+import { AuthModal } from "@/components/shared/AuthModal";
+import { getStoredCustomer, type CustomerUser } from "@/hooks/public/useCustomerAuth";
 import { Filter as FilterIcon, Search, X, AlertCircle, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,6 +23,8 @@ export default function Cars() {
   const [params, setParams] = useSearchParams();
   const { vehicles: all, loading, error, refetch } = useAllVehicles();
   const [page, setPage] = useState(1);
+  const [customer, setCustomer] = useState<CustomerUser | null>(getStoredCustomer);
+  const [authOpen, setAuthOpen] = useState(false);
 
   const get = (k: string) => params.get(k) || "";
   const set = (k: string, v: string) => {
@@ -229,7 +233,14 @@ export default function Cars() {
             {!error && !loading && paged.length > 0 && (
               <>
                 <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
-                  {paged.map((v) => <VehicleCard key={v.id} vehicle={v} />)}
+                  {paged.map((v) => (
+                    <VehicleCard
+                      key={v.id}
+                      vehicle={v}
+                      isLoggedIn={!!customer}
+                      onWishlistRequireLogin={() => setAuthOpen(true)}
+                    />
+                  ))}
                 </div>
                 {totalPages > 1 && (
                   <div className="mt-8 flex items-center justify-center gap-2">
@@ -247,6 +258,7 @@ export default function Cars() {
           </div>
         </div>
       </div>
+      <AuthModal open={authOpen} onOpenChange={setAuthOpen} onSuccess={(u) => setCustomer(u)} />
     </>
   );
 }

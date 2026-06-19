@@ -1,10 +1,10 @@
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
   ArrowLeft, MapPin, Fuel, Settings2, Gauge, Calendar, Shield,
   Phone, MessageCircle, BadgeCheck, AlertCircle, RefreshCw,
-  ChevronLeft, ChevronRight, Play,
+  ChevronLeft, ChevronRight, Play, Star, Heart,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -13,22 +13,21 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SEO } from "@/components/shared/SEO";
+import { AuthModal } from "@/components/shared/AuthModal";
 import { VehicleCard } from "@/components/cards/VehicleCard";
 import { useGetVehicleDetails } from "@/hooks/dealer/useGetVehicleDetails";
 import { useAllVehicles } from "@/hooks/public/useAllVehicles";
+import { useGenerateLead, useGenerateView } from "@/hooks/public/useLeads";
+import {
+  getStoredCustomer,
+  getWishlist,
+  toggleWishlist,
+  type CustomerUser,
+} from "@/hooks/public/useCustomerAuth";
 import { formatINR, formatKM } from "@/utils/helpers";
 import { toast } from "sonner";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 
 const FALLBACK_IMG = "https://images.unsplash.com/photo-1494976388531-d1058494cdd8?w=1200&h=800&fit=crop";
-
-const schema = z.object({
-  customerName: z.string().min(2, "Please enter your name").max(80),
-  mobile: z.string().min(10, "Enter a valid mobile number").max(15),
-});
-type FormVals = z.infer<typeof schema>;
 
 export default function CarDetails() {
   const { id } = useParams<{ id: string }>();
@@ -37,26 +36,87 @@ export default function CarDetails() {
 
   const { data: vehicle, isLoading, isError, error, refetch } = useGetVehicleDetails(vehicleId);
   const { vehicles: allVehicles } = useAllVehicles();
+  const { generateView } = useGenerateView();
+  const { isSubmitting, generateLead } = useGenerateLead();
 
   const [activeImg, setActiveImg] = useState(0);
   const [showContact, setShowContact] = useState(false);
+  const [authOpen, setAuthOpen] = useState(false);
   const [revealed, setRevealed] = useState(false);
+  const [customer, setCustomer] = useState<CustomerUser | null>(getStoredCustomer);
+  const [wishlisted, setWishlisted] = useState(false);
 
-  const form = useForm<FormVals>({
-    resolver: zodResolver(schema),
-    defaultValues: { customerName: "", mobile: "" },
-  });
+  // Lead form fields (autofilled from localStorage)
+  const [leadName, setLeadName] = useState("");
+  const [leadMobile, setLeadMobile] = useState("");
+  const [leadCity, setLeadCity] = useState("");
+  const [leadErr, setLeadErr] = useState("");
 
-  const onSubmit = (values: FormVals) => {
-    // In real app, you'd post a lead to the backend here
-    console.log("Lead submitted:", values);
-    setRevealed(true);
-    toast.success("Contact details revealed!", {
-      description: "Dealer's phone and WhatsApp are now visible below.",
-    });
+  // Generate view when logged-in customer lands on this page
+  useEffect(() => {
+    if (vehicleId && customer) {
+      generateView(vehicleId);
+    }
+  }, [vehicleId, customer, generateView]);
+
+  // Sync wishlist state
+  useEffect(() => {
+    if (vehicleId) setWishlisted(getWishlist().includes(vehicleId));
+  }, [vehicleId]);
+
+  // Autofill lead form from customer data
+  const openContactDialog = () => {
+    const stored = getStoredCustomer();
+    if (!stored) {
+      setAuthOpen(true);
+      return;
+    }
+    setLeadName(stored.customerName ?? "");
+    setLeadMobile(stored.mobile ?? "");
+    setLeadCity(stored.customerCity ?? "");
+    setLeadErr("");
+    setShowContact(true);
   };
 
-  // ── Loading ──────────────────────────────────────────────────────────────
+  const handleAuthSuccess = (user: CustomerUser) => {
+    setCustomer(user);
+    // After login, open contact dialog with autofill
+    setLeadName(user.customerName ?? "");
+    setLeadMobile(user.mobile ?? "");
+    setLeadCity(user.customerCity ?? "");
+    setLeadErr("");
+    setShowContact(true);
+  };
+
+  const handleLeadSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLeadErr("");
+    if (!leadName.trim() || !leadMobile.trim() || !leadCity.trim()) {
+      setLeadErr("All fields are required.");
+      return;
+    }
+    try {
+      await generateLead(vehicleId!, {
+        customerName: leadName,
+        customerMobile: leadMobile,
+        customerCity: leadCity,
+      });
+      setRevealed(true);
+      setShowContact(false);
+      toast.success("Contact details revealed!", {
+        description: "Dealer's phone and WhatsApp are now visible below.",
+      });
+    } catch (e: any) {
+      setLeadErr(e.message ?? "Failed to submit");
+    }
+  };
+
+  const handleWishlist = () => {
+    if (!vehicleId) return;
+    const next = toggleWishlist(vehicleId);
+    setWishlisted(next.includes(vehicleId));
+  };
+
   if (!vehicleId || isNaN(vehicleId)) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
@@ -67,9 +127,7 @@ export default function CarDetails() {
     );
   }
 
-  if (isLoading) {
-    return <CarDetailsSkeleton />;
-  }
+  if (isLoading) return <CarDetailsSkeleton />;
 
   if (isError || !vehicle) {
     return (
@@ -80,21 +138,16 @@ export default function CarDetails() {
           <p className="text-sm text-muted-foreground mt-1">{error?.message ?? "Vehicle not found."}</p>
         </div>
         <div className="flex gap-3">
-          <Button onClick={() => refetch()} className="gap-2">
-            <RefreshCw className="h-4 w-4" /> Retry
-          </Button>
+          <Button onClick={() => refetch()} className="gap-2"><RefreshCw className="h-4 w-4" /> Retry</Button>
           <Button variant="outline" asChild><Link to="/cars">Back to listings</Link></Button>
         </div>
       </div>
     );
   }
 
-  // ── Data ─────────────────────────────────────────────────────────────────
   const images: string[] = vehicle.images && vehicle.images.length > 0 ? vehicle.images : [FALLBACK_IMG];
   const videos: string[] = vehicle.videos ?? [];
-  const related = allVehicles
-    .filter((v) => v.brand === vehicle.brand && v.id !== vehicle.id)
-    .slice(0, 4);
+  const related = allVehicles.filter((v) => v.brand === vehicle.brand && v.id !== vehicle.id).slice(0, 4);
 
   const prevImg = () => setActiveImg((i) => (i === 0 ? images.length - 1 : i - 1));
   const nextImg = () => setActiveImg((i) => (i === images.length - 1 ? 0 : i + 1));
@@ -110,18 +163,16 @@ export default function CarDetails() {
       />
 
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6">
-        {/* Back */}
         <button
           onClick={() => navigate(-1)}
-          className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-5 transition-colors"
+          className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-5 transition-colors cursor-pointer"
         >
           <ArrowLeft className="h-4 w-4" /> Back to listings
         </button>
 
         <div className="grid lg:grid-cols-[1fr_380px] gap-8">
-          {/* ── Left column ─────────────────────────────────────────────── */}
+          {/* Left column */}
           <div className="min-w-0 space-y-6">
-
             {/* Gallery */}
             <div className="space-y-3">
               <motion.div
@@ -137,59 +188,37 @@ export default function CarDetails() {
                   className="h-full w-full object-cover"
                   onError={(e) => { (e.currentTarget as HTMLImageElement).src = FALLBACK_IMG; }}
                 />
-
-                {/* Nav arrows */}
                 {images.length > 1 && (
                   <>
-                    <button
-                      onClick={prevImg}
-                      className="absolute left-3 top-1/2 -translate-y-1/2 h-9 w-9 rounded-full bg-black/50 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
+                    <button onClick={prevImg} className="absolute left-3 top-1/2 -translate-y-1/2 h-9 w-9 rounded-full bg-black/50 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                       <ChevronLeft className="h-5 w-5" />
                     </button>
-                    <button
-                      onClick={nextImg}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 h-9 w-9 rounded-full bg-black/50 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
+                    <button onClick={nextImg} className="absolute right-3 top-1/2 -translate-y-1/2 h-9 w-9 rounded-full bg-black/50 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                       <ChevronRight className="h-5 w-5" />
                     </button>
                   </>
                 )}
-
-                {/* Badges */}
                 <div className="absolute top-4 left-4 flex gap-2">
-                  {vehicle.vehicleStatus === "ACTIVE" && (
-                    <Badge className="bg-success text-success-foreground border-0 gap-1">
-                      <BadgeCheck className="h-3 w-3" /> Active
+                  {vehicle.vehicleStatus === "FEATURED" && (
+                    <Badge className="gradient-primary text-white border-0 gap-1">
+                      <Star className="h-3 w-3 fill-current" /> Featured
                     </Badge>
                   )}
                 </div>
-
-                {/* Image counter */}
                 <div className="absolute bottom-4 right-4 px-2.5 py-1 rounded-full bg-black/60 text-white text-xs font-medium">
                   {activeImg + 1} / {images.length}
                 </div>
               </motion.div>
 
-              {/* Thumbnail strip */}
               {images.length > 1 && (
                 <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-thin">
                   {images.map((src, i) => (
                     <button
                       key={i}
                       onClick={() => setActiveImg(i)}
-                      className={`shrink-0 aspect-[4/3] w-20 rounded-lg overflow-hidden border-2 transition-all ${
-                        activeImg === i
-                          ? "border-accent"
-                          : "border-transparent opacity-60 hover:opacity-100"
-                      }`}
+                      className={`shrink-0 aspect-[4/3] w-20 rounded-lg overflow-hidden border-2 transition-all ${activeImg === i ? "border-accent" : "border-transparent opacity-60 hover:opacity-100"}`}
                     >
-                      <img
-                        src={src}
-                        alt=""
-                        className="h-full w-full object-cover"
-                        onError={(e) => { (e.currentTarget as HTMLImageElement).src = FALLBACK_IMG; }}
-                      />
+                      <img src={src} alt="" className="h-full w-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).src = FALLBACK_IMG; }} />
                     </button>
                   ))}
                 </div>
@@ -204,7 +233,16 @@ export default function CarDetails() {
                 <span>·</span>
                 Posted {new Date(vehicle.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
               </div>
-              <h1 className="font-display text-2xl md:text-3xl font-black mt-1">{title}</h1>
+              <div className="flex items-start justify-between gap-2 mt-1">
+                <h1 className="font-display text-2xl md:text-3xl font-black">{title}</h1>
+                {/* Wishlist on detail page */}
+                <button
+                  onClick={handleWishlist}
+                  className="shrink-0 h-10 w-10 rounded-full border border-border flex items-center justify-center hover:bg-muted transition-colors"
+                >
+                  <Heart className={`h-5 w-5 transition-colors ${wishlisted ? "fill-rose-500 text-rose-500" : "text-muted-foreground"}`} />
+                </button>
+              </div>
               <p className="text-sm text-muted-foreground mt-1">{vehicle.variant}</p>
               <div className="mt-3 text-3xl md:text-4xl font-black font-display text-gradient-primary">
                 {formatINR(vehicle.askingPrice)}
@@ -226,19 +264,15 @@ export default function CarDetails() {
               </CardContent>
             </Card>
 
-            {/* Description */}
             {vehicle.vehicleDescription && (
               <Card>
                 <CardContent className="p-6">
                   <h2 className="font-display font-bold text-lg mb-2">Description</h2>
-                  <p className="text-sm leading-relaxed text-foreground/80 whitespace-pre-line">
-                    {vehicle.vehicleDescription}
-                  </p>
+                  <p className="text-sm leading-relaxed text-foreground/80 whitespace-pre-line">{vehicle.vehicleDescription}</p>
                 </CardContent>
               </Card>
             )}
 
-            {/* Videos */}
             {videos.length > 0 && (
               <Card>
                 <CardContent className="p-6">
@@ -248,12 +282,7 @@ export default function CarDetails() {
                   <div className="space-y-4">
                     {videos.map((src, i) => (
                       <div key={i} className="aspect-video rounded-xl overflow-hidden bg-black">
-                        <video
-                          controls
-                          src={src}
-                          poster={images[0]}
-                          className="h-full w-full"
-                        />
+                        <video controls src={src} poster={images[0]} className="h-full w-full" />
                       </div>
                     ))}
                   </div>
@@ -262,9 +291,8 @@ export default function CarDetails() {
             )}
           </div>
 
-          {/* ── Sticky sidebar ───────────────────────────────────────────── */}
+          {/* Sticky sidebar */}
           <aside className="lg:sticky lg:top-20 self-start space-y-4">
-            {/* Dealer contact card */}
             <Card className="shadow-premium">
               <CardContent className="p-6">
                 <div className="mb-4">
@@ -274,13 +302,9 @@ export default function CarDetails() {
                     {vehicle.city ? ` · ${vehicle.city}` : ""}
                   </p>
                 </div>
-
                 <div className="flex flex-col gap-2">
                   {!revealed ? (
-                    <Button
-                      onClick={() => setShowContact(true)}
-                      className="gradient-primary text-white border-0 hover:opacity-90 gap-2"
-                    >
+                    <Button onClick={openContactDialog} className="gradient-primary text-white border-0 hover:opacity-90 gap-2">
                       <Phone className="h-4 w-4" /> Contact Dealer
                     </Button>
                   ) : (
@@ -293,11 +317,7 @@ export default function CarDetails() {
                         </a>
                       )}
                       {vehicle.dealerContactNumber && (
-                        <a
-                          href={`https://wa.me/${vehicle.dealerContactNumber.replace(/\D/g, "")}`}
-                          target="_blank"
-                          rel="noreferrer"
-                        >
+                        <a href={`https://wa.me/${vehicle.dealerContactNumber.replace(/\D/g, "")}`} target="_blank" rel="noreferrer">
                           <Button className="w-full bg-success text-success-foreground hover:bg-success/90 gap-2">
                             <MessageCircle className="h-4 w-4" /> WhatsApp Dealer
                           </Button>
@@ -305,84 +325,74 @@ export default function CarDetails() {
                       )}
                       {vehicle.dealerContactEmail && (
                         <a href={`mailto:${vehicle.dealerContactEmail}`}>
-                          <Button variant="outline" className="w-full gap-2">
-                            Email Dealer
-                          </Button>
+                          <Button variant="outline" className="w-full gap-2">Email Dealer</Button>
                         </a>
                       )}
                     </>
                   )}
-                  <Button asChild variant="outline">
-                    <Link to="/dealers">View all dealers</Link>
-                  </Button>
                 </div>
               </CardContent>
             </Card>
 
-            {/* Trust indicators */}
             <Card>
               <CardContent className="p-6 space-y-2 text-sm">
-                <div className="flex items-center gap-2 text-success">
-                  <BadgeCheck className="h-4 w-4" /> Verified by AutoHub
-                </div>
-                <div className="flex items-center gap-2 text-success">
-                  <Shield className="h-4 w-4" /> Document check passed
-                </div>
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <Phone className="h-4 w-4" /> Direct dealer contact
-                </div>
+                <div className="flex items-center gap-2 text-success"><BadgeCheck className="h-4 w-4" /> Verified by AutoHub</div>
+                <div className="flex items-center gap-2 text-success"><Shield className="h-4 w-4" /> Document check passed</div>
+                <div className="flex items-center gap-2 text-muted-foreground"><Phone className="h-4 w-4" /> Direct dealer contact</div>
               </CardContent>
             </Card>
           </aside>
         </div>
 
-        {/* Related vehicles */}
         {related.length > 0 && (
           <section className="mt-14">
-            <h2 className="font-display text-xl md:text-2xl font-black mb-5">
-              More {vehicle.brand} Cars
-            </h2>
+            <h2 className="font-display text-xl md:text-2xl font-black mb-5">More {vehicle.brand} Cars</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-              {related.map((v) => <VehicleCard key={v.id} vehicle={v} />)}
+              {related.map((v) => (
+                <VehicleCard
+                  key={v.id}
+                  vehicle={v}
+                  isLoggedIn={!!customer}
+                  onWishlistRequireLogin={() => setAuthOpen(true)}
+                />
+              ))}
             </div>
           </section>
         )}
       </div>
 
-      {/* Contact dialog */}
+      {/* Contact Dealer Dialog */}
       <Dialog open={showContact} onOpenChange={setShowContact}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Get dealer contact details</DialogTitle>
+            <DialogTitle>Contact Dealer</DialogTitle>
             <DialogDescription>
-              Enter your details to instantly reveal the dealer's phone and WhatsApp.
-              We'll never share your number publicly.
+              Your details are pre-filled. Confirm to reveal the dealer's contact.
             </DialogDescription>
           </DialogHeader>
-          <form
-            onSubmit={form.handleSubmit((v) => { onSubmit(v); setShowContact(false); })}
-            className="space-y-3"
-          >
+          <form onSubmit={handleLeadSubmit} className="space-y-3">
             <div>
-              <Label>Your name</Label>
-              <Input {...form.register("customerName")} placeholder="e.g. Aman Verma" className="mt-1" />
-              {form.formState.errors.customerName && (
-                <p className="text-xs text-destructive mt-1">{form.formState.errors.customerName.message}</p>
-              )}
+              <Label>Your Name</Label>
+              <Input value={leadName} onChange={(e) => setLeadName(e.target.value)} placeholder="Aman Verma" className="mt-1" required />
             </div>
             <div>
-              <Label>Mobile number</Label>
-              <Input {...form.register("mobile")} placeholder="+91 98xxx xxxxx" className="mt-1" />
-              {form.formState.errors.mobile && (
-                <p className="text-xs text-destructive mt-1">{form.formState.errors.mobile.message}</p>
-              )}
+              <Label>Mobile Number</Label>
+              <Input value={leadMobile} onChange={(e) => setLeadMobile(e.target.value)} placeholder="+91 98xxx xxxxx" className="mt-1" required />
             </div>
-            <Button type="submit" className="w-full gradient-primary text-white border-0">
-              Show dealer contact
+            <div>
+              <Label>City</Label>
+              <Input value={leadCity} onChange={(e) => setLeadCity(e.target.value)} placeholder="Mumbai" className="mt-1" required />
+            </div>
+            {leadErr && <p className="text-xs text-destructive">{leadErr}</p>}
+            <Button type="submit" className="w-full gradient-primary text-white border-0" disabled={isSubmitting}>
+              {isSubmitting ? "Submitting…" : "Show Dealer Contact"}
             </Button>
           </form>
         </DialogContent>
       </Dialog>
+
+      {/* Auth Modal (shown if user not logged in and clicks Contact Dealer) */}
+      <AuthModal open={authOpen} onOpenChange={setAuthOpen} onSuccess={handleAuthSuccess} />
     </>
   );
 }
@@ -390,9 +400,7 @@ export default function CarDetails() {
 function Spec({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
   return (
     <div>
-      <div className="text-xs text-muted-foreground flex items-center gap-1.5">
-        {icon} {label}
-      </div>
+      <div className="text-xs text-muted-foreground flex items-center gap-1.5">{icon} {label}</div>
       <div className="text-sm font-semibold mt-1">{value || "—"}</div>
     </div>
   );
@@ -401,32 +409,21 @@ function Spec({ icon, label, value }: { icon: React.ReactNode; label: string; va
 function CarDetailsSkeleton() {
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 animate-pulse">
-      {/* Back link */}
       <div className="h-4 w-32 bg-muted rounded mb-5" />
-
       <div className="grid lg:grid-cols-[1fr_380px] gap-8">
-        {/* Left column */}
         <div className="space-y-6">
-          {/* Main image */}
           <div className="space-y-3">
             <div className="aspect-[16/10] rounded-2xl bg-muted" />
-            {/* Thumbnails */}
             <div className="flex gap-2">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <div key={i} className="shrink-0 w-20 aspect-[4/3] rounded-lg bg-muted" />
-              ))}
+              {Array.from({ length: 5 }).map((_, i) => <div key={i} className="shrink-0 w-20 aspect-[4/3] rounded-lg bg-muted" />)}
             </div>
           </div>
-
-          {/* Title block */}
           <div className="space-y-2">
             <div className="h-3 w-40 bg-muted rounded" />
             <div className="h-7 w-3/4 bg-muted rounded" />
             <div className="h-4 w-1/3 bg-muted rounded" />
             <div className="h-9 w-1/2 bg-muted rounded mt-1" />
           </div>
-
-          {/* Specs card */}
           <div className="rounded-2xl border border-border bg-card p-6 space-y-4">
             <div className="h-5 w-28 bg-muted rounded" />
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
@@ -438,30 +435,12 @@ function CarDetailsSkeleton() {
               ))}
             </div>
           </div>
-
-          {/* Description card */}
-          <div className="rounded-2xl border border-border bg-card p-6 space-y-3">
-            <div className="h-5 w-32 bg-muted rounded" />
-            <div className="space-y-2">
-              <div className="h-3 w-full bg-muted rounded" />
-              <div className="h-3 w-5/6 bg-muted rounded" />
-              <div className="h-3 w-4/6 bg-muted rounded" />
-            </div>
-          </div>
         </div>
-
-        {/* Sidebar */}
         <div className="space-y-4">
           <div className="rounded-2xl border border-border bg-card p-6 space-y-4">
             <div className="h-5 w-36 bg-muted rounded" />
             <div className="h-3 w-28 bg-muted rounded" />
             <div className="h-10 w-full bg-muted rounded-lg" />
-            <div className="h-10 w-full bg-muted rounded-lg" />
-          </div>
-          <div className="rounded-2xl border border-border bg-card p-6 space-y-3">
-            {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="h-4 w-48 bg-muted rounded" />
-            ))}
           </div>
         </div>
       </div>

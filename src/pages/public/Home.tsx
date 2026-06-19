@@ -189,7 +189,7 @@ export default function Home() {
         </div>
       </Section>
 
-     
+
 
       {/* CTA */}
       <section className="py-16">
@@ -201,7 +201,7 @@ export default function Home() {
               <Button asChild size="lg" className="bg-accent text-accent-foreground hover:bg-accent/90 border-0">
                 <Link to="/auth/register">Register as Dealer</Link>
               </Button>
-             
+
             </div>
           </div>
         </div>

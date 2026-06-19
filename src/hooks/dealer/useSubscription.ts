@@ -35,10 +35,10 @@ export function useGetCurrentPlan(dealerId: string) {
     queryFn: async () => {
       try {
         const { data: body } = await apiClient.get(`/api/dealer/current-plan/${dealerId}`);
-        if (body?.status === 500) return { plan: null, message: body?.message ?? 'No active plan' };
         return { plan: body.data, message: body?.message ?? '' };
-      } catch {
-        return { plan: null, message: 'No active plan' };
+      } catch (err: any) {
+        const msg = err?.response?.data?.message ?? 'No active plan';
+        return { plan: null, message: msg };
       }
     },
     enabled: !!dealerId,

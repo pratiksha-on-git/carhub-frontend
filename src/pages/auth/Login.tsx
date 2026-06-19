@@ -35,8 +35,11 @@ export default function Login() {
       const result = await login({ email: data.email, password: data.password });
       setUserFromToken(result.role, result.data);
 
+      const payload = result.data as Record<string, any>;
+      const dealerName = String(payload.businessName ?? payload.ownerName ?? payload.name ?? "Dealer");
+
       toast.success(
-        result.role === "admin" ? "Welcome, Admin!" : "Welcome back!",
+        result.role === "admin" ? "Welcome, Admin!" : `Welcome back, ${dealerName}!`,
         {
           description:
             result.role === "admin"
@@ -66,73 +69,73 @@ export default function Login() {
       <SEO title="Sign In — AutoHub India" />
       <div className="min-h-screen grid lg:grid-cols-2 bg-background">
         {/* Left decorative panel */}
-       <div className="hidden lg:flex gradient-primary text-white p-12 flex-col justify-between">
-  {/* Logo */}
-  <Link to="/" className="flex items-center gap-3">
-    <div className="grid h-10 w-10 place-items-center rounded-xl bg-white/20 backdrop-blur-sm">
-      <Car className="h-5 w-5" />
-    </div>
+        <div className="hidden lg:flex gradient-primary text-white p-12 flex-col justify-between">
+          {/* Logo */}
+          <Link to="/" className="flex items-center gap-3">
+            <div className="grid h-10 w-10 place-items-center rounded-xl bg-white/20 backdrop-blur-sm">
+              <Car className="h-5 w-5" />
+            </div>
 
-    <div>
-      <div className="font-display font-black text-lg">
-        AutoHub India
-      </div>
-      <div className="text-xs text-white/70">
-        Dealer Management Portal
-      </div>
-    </div>
-  </Link>
+            <div>
+              <div className="font-display font-black text-lg">
+                AutoHub India
+              </div>
+              <div className="text-xs text-white/70">
+                Dealer Management Portal
+              </div>
+            </div>
+          </Link>
 
-  {/* Main Content */}
-  <div className="max-w-lg">
-    <h2 className="font-display text-4xl font-black leading-tight">
-      Grow your dealership
-      <br />
-      with quality leads
-    </h2>
+          {/* Main Content */}
+          <div className="max-w-lg">
+            <h2 className="font-display text-4xl font-black leading-tight">
+              Grow your dealership
+              <br />
+              with quality leads
+            </h2>
 
-    <p className="mt-4 text-lg text-white/80">
-      Join 500+ verified dealers reaching 50,000+ buyers every month
-      across 150+ Indian cities.
-    </p>
+            <p className="mt-4 text-lg text-white/80">
+              Join 500+ verified dealers reaching 50,000+ buyers every month
+              across 150+ Indian cities.
+            </p>
 
-    {/* Stats */}
-    <div className="mt-10 grid grid-cols-3 gap-8">
-      <div>
-        <div className="text-3xl font-black">500+</div>
-        <div className="mt-1 text-sm text-white/70">
-          Verified dealers
+            {/* Stats */}
+            <div className="mt-10 grid grid-cols-3 gap-8">
+              <div>
+                <div className="text-3xl font-black">500+</div>
+                <div className="mt-1 text-sm text-white/70">
+                  Verified dealers
+                </div>
+              </div>
+
+              <div>
+                <div className="text-3xl font-black">25K+</div>
+                <div className="mt-1 text-sm text-white/70">
+                  Active listings
+                </div>
+              </div>
+
+              <div>
+                <div className="text-3xl font-black">100%</div>
+                <div className="mt-1 text-sm text-white/70">
+                  KYC verified
+                </div>
+              </div>
+            </div>
+
+            {/* Trust Badge */}
+            <div className="mt-8 inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm text-white/90 backdrop-blur-sm">
+              <ShieldCheck className="h-4 w-4" />
+              Trusted by leading automobile dealers across India
+            </div>
+          </div>
+
+          {/* Footer */}
+          <div className="flex items-center justify-between text-xs text-white/60">
+            <span>© 2026 AutoHub India</span>
+            <span>Secure • Reliable • Scalable</span>
+          </div>
         </div>
-      </div>
-
-      <div>
-        <div className="text-3xl font-black">25K+</div>
-        <div className="mt-1 text-sm text-white/70">
-          Active listings
-        </div>
-      </div>
-
-      <div>
-        <div className="text-3xl font-black">100%</div>
-        <div className="mt-1 text-sm text-white/70">
-          KYC verified
-        </div>
-      </div>
-    </div>
-
-    {/* Trust Badge */}
-    <div className="mt-8 inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm text-white/90 backdrop-blur-sm">
-      <ShieldCheck className="h-4 w-4" />
-      Trusted by leading automobile dealers across India
-    </div>
-  </div>
-
-  {/* Footer */}
-  <div className="flex items-center justify-between text-xs text-white/60">
-    <span>© 2026 AutoHub India</span>
-    <span>Secure • Reliable • Scalable</span>
-  </div>
-</div>
 
         {/* Login form */}
         <div className="flex items-center justify-center p-6">

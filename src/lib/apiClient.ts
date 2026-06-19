@@ -10,8 +10,12 @@ const apiClient = axios.create({
 
 // Request interceptor — attach auth token if present
 apiClient.interceptors.request.use((config) => {
-  const token =
-    localStorage.getItem("dealerToken") ?? localStorage.getItem("adminToken") ?? "";
+  const url = config.url ?? "";
+  // Pick token based on API path — admin APIs use adminToken, dealer APIs use dealerToken
+  const isAdminApi = url.includes("/api/admin");
+  const token = isAdminApi
+    ? (localStorage.getItem("adminToken") ?? "")
+    : (localStorage.getItem("dealerToken") ?? localStorage.getItem("adminToken") ?? "");
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }

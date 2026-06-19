@@ -1,18 +1,35 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Fuel, Gauge, Settings2, MapPin } from "lucide-react";
+import { Fuel, Gauge, Settings2, MapPin, Star, Heart } from "lucide-react";
 import type { Vehicle } from "@/types";
 import { formatINR, formatKM } from "@/utils/helpers";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { getWishlist, toggleWishlist } from "@/hooks/public/useCustomerAuth";
 
 const FALLBACK_IMG = "https://images.unsplash.com/photo-1494976388531-d1058494cdd8?w=800&h=533&fit=crop";
 
-export function VehicleCard({ vehicle }: { vehicle: Vehicle }) {
-  const imageUrl =
-    vehicle.images && vehicle.images.length > 0
-      ? vehicle.images[0]
-      : FALLBACK_IMG;
+interface VehicleCardProps {
+  vehicle: Vehicle;
+  onWishlistRequireLogin?: () => void;
+  isLoggedIn?: boolean;
+}
+
+export function VehicleCard({ vehicle, onWishlistRequireLogin, isLoggedIn }: VehicleCardProps) {
+  const imageUrl = vehicle.images && vehicle.images.length > 0 ? vehicle.images[0] : FALLBACK_IMG;
+  const [wishlisted, setWishlisted] = useState(() => getWishlist().includes(vehicle.id));
+
+  const handleWishlist = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!isLoggedIn && onWishlistRequireLogin) {
+      onWishlistRequireLogin();
+      return;
+    }
+    const next = toggleWishlist(vehicle.id);
+    setWishlisted(next.includes(vehicle.id));
+  };
 
   return (
     <motion.div
@@ -27,25 +44,30 @@ export function VehicleCard({ vehicle }: { vehicle: Vehicle }) {
             alt={`${vehicle.brand} ${vehicle.model}`}
             loading="lazy"
             className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-            onError={(e) => {
-              (e.currentTarget as HTMLImageElement).src = FALLBACK_IMG;
-            }}
+            onError={(e) => { (e.currentTarget as HTMLImageElement).src = FALLBACK_IMG; }}
           />
-          <div className="absolute top-3 right-3">
-            <Badge
-              variant="secondary"
-              className="bg-background/90 backdrop-blur text-foreground font-semibold"
-            >
+          <div className="absolute top-3 right-3 flex items-center gap-1.5">
+            <Badge variant="secondary" className="bg-background/90 backdrop-blur text-foreground font-semibold">
               {vehicle.registrationYear}
             </Badge>
           </div>
-          {vehicle.vehicleStatus === "ACTIVE" && (
+          {vehicle.vehicleStatus === "FEATURED" && (
             <div className="absolute top-3 left-3">
-              <Badge className="bg-success text-success-foreground border-0 text-xs">
-                Active
+              <Badge className="gradient-primary text-white border-0 text-xs">
+                <Star className="h-3 w-3 fill-current mr-1" /> Featured
               </Badge>
             </div>
           )}
+
+          {/* Wishlist heart */}
+          <button
+            onClick={handleWishlist}
+            className="absolute bottom-3 right-3 h-8 w-8 rounded-full bg-background/80 backdrop-blur flex items-center justify-center shadow transition-transform hover:scale-110"
+          >
+            <Heart
+              className={`h-4 w-4 transition-colors ${wishlisted ? "fill-rose-500 text-rose-500" : "text-foreground/60"}`}
+            />
+          </button>
         </div>
       </Link>
 
@@ -56,14 +78,10 @@ export function VehicleCard({ vehicle }: { vehicle: Vehicle }) {
               {vehicle.brand} {vehicle.model}
             </h3>
           </Link>
-          <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5">
-            {vehicle.variant}
-          </p>
+          <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5">{vehicle.variant}</p>
         </div>
 
-        <div className="text-xl font-black text-foreground font-display">
-          {formatINR(vehicle.askingPrice)}
-        </div>
+        <div className="text-xl font-black text-foreground font-display">{formatINR(vehicle.askingPrice)}</div>
 
         <div className="grid grid-cols-3 gap-2 text-xs text-muted-foreground border-y border-border py-3">
           <div className="flex items-center gap-1.5">
@@ -86,18 +104,12 @@ export function VehicleCard({ vehicle }: { vehicle: Vehicle }) {
             <span className="truncate">{vehicle.city}</span>
           </div>
           {vehicle.dealerContactName && (
-            <span className="text-muted-foreground truncate ml-2">
-              {vehicle.dealerContactName}
-            </span>
+            <span className="text-muted-foreground truncate ml-2">{vehicle.dealerContactName}</span>
           )}
         </div>
 
         <div className="flex gap-2 pt-1">
-          <Button
-            asChild
-            size="sm"
-            className="flex-1 gradient-primary text-white border-0 hover:opacity-90"
-          >
+          <Button asChild size="sm" className="flex-1 gradient-primary text-white border-0 hover:opacity-90">
             <Link to={`/car/${vehicle.id}`}>View Details</Link>
           </Button>
         </div>

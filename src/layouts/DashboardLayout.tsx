@@ -46,14 +46,14 @@ export default function DashboardLayout({ title, nav, accentLabel }: Props) {
   };
 
   const SidebarBody = () => (
-    <div className="flex h-full flex-col bg-card">
-      <div className="h-16 flex items-center gap-2 px-4 border-b border-border">
+    <div className="flex h-full flex-col" style={{ background: "linear-gradient(180deg, #0f172a 0%, #1e3a5f 100%)" }}>
+      <div className="h-16 flex items-center gap-2 px-4 border-b border-white/10">
         <Link to="/" className="flex items-center gap-2">
-          <div className="grid h-9 w-9 place-items-center rounded-xl gradient-primary text-white">
+          <div className="grid h-9 w-9 place-items-center rounded-xl bg-white/15 text-white">
             <Car className="h-5 w-5" />
           </div>
-          <div className="font-display font-black text-base leading-none">
-            AutoHub <span className="text-accent">{accentLabel}</span>
+          <div className="font-display font-black text-base leading-none text-white">
+            AutoHub <span className="text-sky-400">{accentLabel}</span>
           </div>
         </Link>
       </div>
@@ -64,7 +64,10 @@ export default function DashboardLayout({ title, nav, accentLabel }: Props) {
             to={n.to}
             end
             className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${isActive ? "gradient-primary text-white shadow-card" : "text-foreground/70 hover:text-foreground hover:bg-muted"
+              `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                isActive
+                  ? "bg-blue-500 text-white shadow-sm border border-sky-400/40"
+                  : "text-white/60 hover:text-white hover:bg-white/10"
               }`
             }
           >
@@ -73,11 +76,11 @@ export default function DashboardLayout({ title, nav, accentLabel }: Props) {
           </NavLink>
         ))}
       </nav>
-      <div className="p-3 border-t border-border">
-        <div className="px-2 py-2 text-xs text-muted-foreground">
-          Signed in as<br /><span className="font-semibold text-foreground">{email}</span>
+      <div className="p-3 border-t border-white/10">
+        <div className="px-2 py-2 text-xs text-white/50">
+          Signed in as<br /><span className="font-semibold text-white/80">{email}</span>
         </div>
-        <Button variant="ghost" className="w-full justify-start gap-2 text-destructive" onClick={handleLogout}>
+        <Button variant="ghost" className="w-full justify-start gap-2 text-red-400 hover:text-red-300 hover:bg-white/10" onClick={handleLogout}>
           <LogOut className="h-4 w-4" /> Logout
         </Button>
       </div>
@@ -86,7 +89,7 @@ export default function DashboardLayout({ title, nav, accentLabel }: Props) {
 
   return (
     <div className="min-h-screen bg-background flex">
-      <aside className="hidden lg:block w-64 shrink-0 border-r border-border">
+      <aside className="hidden lg:block w-64 shrink-0">
         <div className="sticky top-0 h-screen"><SidebarBody /></div>
       </aside>
       <div className="flex-1 min-w-0 flex flex-col">
