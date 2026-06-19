@@ -15,6 +15,7 @@ import { toast } from "sonner";
 const nav = [
   { to: "/", label: "Home" },
   { to: "/cars", label: "Browse Cars" },
+  {to:"/primium", label:"Premium Cars"},
   { to: "/contact", label: "Contact" },
 ];
 
@@ -87,7 +88,7 @@ export default function PublicLayout() {
                 to={n.to}
                 end={n.to === "/"}
                 className={({ isActive }) =>
-                  `px-3 py-2 rounded-lg text-sm font-medium transition-colors ${isActive ? "text-accent bg-accent/10" : "text-foreground/70 hover:text-foreground hover:bg-muted"}`
+                  `px-3 py-2 rounded-lg text-md font-medium transition-colors ${isActive ? "text-accent bg-accent/10" : "text-foreground/70 hover:text-foreground hover:bg-muted"}`
                 }
               >
                 {n.label}
@@ -96,15 +97,7 @@ export default function PublicLayout() {
           </nav>
 
           <div className="ml-auto flex items-center gap-2">
-            {/* Wishlist icon */}
-            <button
-              onClick={handleWishlistClick}
-              className="relative h-9 w-9 flex items-center justify-center rounded-lg hover:bg-muted transition-colors"
-              title="Wishlist"
-            >
-              <Heart className="h-5 w-5 text-foreground/70" />
-            </button>
-
+           
             {/* Customer user icon */}
             <div className="relative" ref={menuRef}>
               <button
@@ -149,7 +142,7 @@ export default function PublicLayout() {
             </div>
 
             {/* Dealer buttons */}
-            <Button asChild variant="ghost" size="sm" className="hidden sm:inline-flex">
+            <Button asChild  size="sm" className="hidden bg-white border border-blue-500 text-black hover:bg-blue-500/90 sm:inline-flex">
               <Link to="/auth/login">Dealer Login</Link>
             </Button>
             <Button asChild size="sm" className="hidden sm:inline-flex gradient-primary text-white border-0 hover:opacity-90">
@@ -169,12 +162,7 @@ export default function PublicLayout() {
                       {n.label}
                     </Link>
                   ))}
-                  <button
-                    onClick={() => { setOpen(false); handleWishlistClick(); }}
-                    className="px-3 py-3 rounded-lg hover:bg-muted font-medium text-left flex items-center gap-2"
-                  >
-                    <Heart className="h-4 w-4" /> Wishlist
-                  </button>
+                 
                   <div className="h-px bg-border my-3" />
                   <Button asChild variant="outline" className="justify-start">
                     <Link to="/auth/login">Dealer Login</Link>

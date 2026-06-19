@@ -5,7 +5,7 @@ export function useSendOtp() {
   return useMutation({
     mutationFn: async (email: string) => {
       const { data: body } = await apiClient.post(
-        `/api/auth/send-otp?email=${encodeURIComponent(email)}`,
+        `/api/dealer/send-otp?email=${encodeURIComponent(email)}`,
       );
       return body;
     },
@@ -15,7 +15,7 @@ export function useSendOtp() {
 export function useVerifyOtp() {
   return useMutation({
     mutationFn: async (payload: { email: string; otp: string }) => {
-      const { data: body } = await apiClient.post('/api/auth/verify-otp', payload);
+      const { data: body } = await apiClient.post('/api/dealer/verify-otp', payload);
       return body;
     },
   });
@@ -24,7 +24,7 @@ export function useVerifyOtp() {
 export function useResetPassword() {
   return useMutation({
     mutationFn: async (payload: { email: string; oldPassword: string; newPassword: string }) => {
-      const { data: body } = await apiClient.post('/api/auth/reset-password', payload);
+      const { data: body } = await apiClient.post('/api/dealer/reset-password', payload);
       return body;
     },
   });

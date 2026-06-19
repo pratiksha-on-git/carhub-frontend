@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
+import { useDealerAuth } from "@/contexts/DealerAuthContext";
 import { formatINR, formatKM } from "@/utils/helpers";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -17,7 +17,7 @@ import { useUpdateVehicleStatus } from "@/hooks/dealer/useUpdateVehicleStatus";
 
 export default function DealerVehicles() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user } = useDealerAuth();
   const dealerId = user?.id || "";
 
   const [searchQuery, setSearchQuery] = useState("");

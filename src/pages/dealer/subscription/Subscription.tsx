@@ -10,7 +10,7 @@ import {
   Car,
   Clock,
 } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
+import { useDealerAuth } from "@/contexts/DealerAuthContext";
 import { toast } from "sonner";
 import {
   useGetSubscriptionPlans,
@@ -21,7 +21,7 @@ import {
 const PLAN_ORDER = ["BASIC", "STANDARD", "PREMIUM"];
 
 export default function DealerSubscription() {
-  const { user } = useAuth();
+  const { user } = useDealerAuth();
   const dealerId = user?.id?.toString() || "";
 
   const { data: plans = [], isLoading: plansLoading } =

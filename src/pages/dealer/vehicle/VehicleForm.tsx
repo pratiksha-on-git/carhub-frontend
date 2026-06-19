@@ -6,7 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { BRANDS, CITIES, FUELS, TRANSMISSIONS } from "@/data/vehicles";
-import { useAuth } from "@/contexts/AuthContext";
+import { useDealerAuth } from "@/contexts/DealerAuthContext";
 import { toast } from "sonner";
 import { useAddVehicle } from "@/hooks/dealer/useAddVehicle";
 import { useGetVehicleDetails } from "@/hooks/dealer/useGetVehicleDetails";
@@ -19,7 +19,7 @@ export interface VehicleFormProps {
 }
 
 export default function VehicleForm({ vehicleId, onSuccess, onCancel }: VehicleFormProps) {
-  const { user } = useAuth();
+  const { user } = useDealerAuth();
   const addVehicleMutation = useAddVehicle(user?.id || "");
   const updateVehicleMutation = useUpdateVehicle(user?.id || "");
   const { data: vehicleDetails, isLoading: loadingDetails } = useGetVehicleDetails(vehicleId);

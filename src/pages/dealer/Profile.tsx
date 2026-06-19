@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { useAuth } from "@/contexts/AuthContext";
+import { useDealerAuth } from "@/contexts/DealerAuthContext";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import { useGetDealerProfile } from "@/hooks/dealer/useGetDealerProfile";
@@ -12,7 +12,7 @@ import { useUpdateDealerProfile } from "@/hooks/dealer/useUpdateDealerProfile";
 import { useSendOtp, useVerifyOtp, useResetPassword } from "@/hooks/dealer/useChangePassword";
 
 export default function DealerProfile() {
-  const { user, updateUserFields } = useAuth();
+  const { user, updateUserFields } = useDealerAuth();
   const dealerId = user?.id?.toString() || "";
 
   const { data: profile, isLoading } = useGetDealerProfile(dealerId);

@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate, useNavigate } from "react-router-dom";
-import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import { AdminAuthProvider } from "@/contexts/AdminAuthContext";
+import { DealerAuthProvider } from "@/contexts/DealerAuthContext";
 import { Toaster } from "@/components/ui/sonner";
 import { useEffect } from "react";
 
@@ -37,7 +38,8 @@ import AdminReports from "@/pages/admin/Reports";
 
 export default function App() {
   return (
-    <AuthProvider>
+    <AdminAuthProvider>
+    <DealerAuthProvider>
       <BrowserRouter>
         <Routes>
           {/* Public */}
@@ -90,6 +92,7 @@ export default function App() {
         </Routes>
       </BrowserRouter>
       <Toaster position="top-right" richColors />
-    </AuthProvider>
+    </DealerAuthProvider>
+    </AdminAuthProvider>
   );
 }

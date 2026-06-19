@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search, RefreshCw } from "lucide-react";
-import { useAdminLeads } from "@/hooks/admin/useAdminLeads";
+import { useAdminLeads, type AdminLead } from "@/hooks/admin/useAdminLeads";
 
 const leadStatusStyle: Record<string, string> = {
   NEW: "bg-blue-100 text-blue-700 border-blue-200",
@@ -16,14 +16,28 @@ const leadStatusStyle: Record<string, string> = {
 
 export default function AdminLeads() {
   const [search, setSearch] = useState("");
-  const { data: leads = [], isLoading, refetch, isFetching } = useAdminLeads();
+  const { data: leads = [], isLoading, refetch, isFetching, error } = useAdminLeads();
 
-  const filtered = leads.filter((l) =>
-    l.customerName?.toLowerCase().includes(search.toLowerCase()) ||
-    l.vehicleName?.toLowerCase().includes(search.toLowerCase()) ||
-    l.customerCity?.toLowerCase().includes(search.toLowerCase()) ||
-    l.customerMobile?.includes(search)
-  );
+  if (error) console.error("[AdminLeads] fetch error:", error);
+
+  const getVehicleLabel = (v: AdminLead["vehicleName"]) => {
+    try {
+      if (typeof v === "object" && v !== null) return `${v.brand} ${v.model} ${v.variant}`;
+      return String(v ?? "");
+    } catch { return ""; }
+  };
+
+  const filtered = leads.filter((l) => {
+    try {
+      const vehicle = getVehicleLabel(l.vehicleName);
+      return (
+        l.customerName?.toLowerCase().includes(search.toLowerCase()) ||
+        vehicle.toLowerCase().includes(search.toLowerCase()) ||
+        l.customerCity?.toLowerCase().includes(search.toLowerCase()) ||
+        l.customerMobile?.includes(search)
+      );
+    } catch { return true; }
+  });
 
   return (
     <Card>
@@ -61,7 +75,11 @@ export default function AdminLeads() {
                 <TableCell className="font-medium">{l.customerName}</TableCell>
                 <TableCell className="hidden sm:table-cell text-sm text-muted-foreground">{l.customerMobile}</TableCell>
                 <TableCell className="hidden sm:table-cell text-sm text-muted-foreground">{l.customerCity}</TableCell>
-                <TableCell className="text-sm">{l.vehicleName}</TableCell>
+                <TableCell className="text-sm">
+                  {typeof l.vehicleName === "object" && l.vehicleName
+                    ? `${l.vehicleName.brand} ${l.vehicleName.model} ${l.vehicleName.variant}`
+                    : l.vehicleName ?? "—"}
+                </TableCell>
                 <TableCell className="hidden md:table-cell text-sm text-muted-foreground">
                   {l.enquiryDate ? new Date(l.enquiryDate).toLocaleDateString() : "—"}
                 </TableCell>

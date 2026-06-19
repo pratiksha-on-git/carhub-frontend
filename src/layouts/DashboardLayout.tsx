@@ -1,27 +1,11 @@
 import { Link, NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Car, LogOut, Menu, X } from "lucide-react";
+import { Car, LogOut, Menu } from "lucide-react";
 import { useState, useEffect, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { useAuth } from "@/contexts/AuthContext";
-
-/** Read logged-in user's display name from localStorage */
-function getLoggedInName(): string {
-  try {
-    const adminRaw = localStorage.getItem("adminData");
-    if (adminRaw) {
-      const d = JSON.parse(adminRaw);
-      return String(d.fullName ?? d.name ?? d.email ?? "Admin");
-    }
-    const dealerRaw = localStorage.getItem("dealerData");
-    if (dealerRaw) {
-      const d = JSON.parse(dealerRaw);
-      return String(d.businessName ?? d.ownerName ?? d.name ?? d.email ?? "Dealer");
-    }
-  } catch { /* ignore */ }
-  return "";
-}
+import { useAdminAuth } from "@/contexts/AdminAuthContext";
+import { useDealerAuth } from "@/contexts/DealerAuthContext";
 
 export interface NavItem { to: string; label: string; icon: ReactNode; }
 
@@ -33,11 +17,15 @@ interface Props {
 
 export default function DashboardLayout({ title, nav, accentLabel }: Props) {
   const { pathname } = useLocation();
-  const [open, setOpen] = useState(false);
-  const displayName = getLoggedInName();
-  const email = localStorage.getItem("adminData") ? JSON.parse(localStorage.getItem("adminData") || "{}").sub : JSON.parse(localStorage.getItem("dealerData") || "{}").sub;
   const navigate = useNavigate();
-  const { logout } = useAuth();
+  const [open, setOpen] = useState(false);
+  const isAdmin = pathname.startsWith("/admin");
+  const adminAuth = useAdminAuth();
+  const dealerAuth = useDealerAuth();
+  const { user, logout } = isAdmin ? adminAuth : dealerAuth;
+  const displayName = user?.name ?? "";
+  const email = user?.email ?? "";
+
   useEffect(() => { setOpen(false); }, [pathname]);
 
   const handleLogout = async () => {

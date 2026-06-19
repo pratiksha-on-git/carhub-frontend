@@ -96,6 +96,19 @@ export function useCustomerLogin() {
 
       const decoded = decodeJwt(token);
 
+      // Role check — only CUSTOMER role allowed here
+      const rawRole = String(
+        decoded.role ?? decoded.roles ?? decoded.authority ?? "",
+      ).toUpperCase();
+      const isCustomer =
+        rawRole.includes("CUSTOMER") ||
+        (Array.isArray(decoded.roles) &&
+          (decoded.roles as string[]).some((r) => r.toUpperCase().includes("CUSTOMER")));
+
+      if (!isCustomer) {
+        throw new Error("Access denied. Please check your credentials and try again.");
+      }
+
       const user: CustomerUser = {
         customerName:
           body.data?.customerName ??

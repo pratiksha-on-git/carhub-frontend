@@ -14,9 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SEO } from "@/components/shared/SEO";
 import { AuthModal } from "@/components/shared/AuthModal";
-import { VehicleCard } from "@/components/cards/VehicleCard";
 import { useGetVehicleDetails } from "@/hooks/dealer/useGetVehicleDetails";
-import { useAllVehicles } from "@/hooks/public/useAllVehicles";
 import { useGenerateLead, useGenerateView } from "@/hooks/public/useLeads";
 import {
   getStoredCustomer,
@@ -35,7 +33,6 @@ export default function CarDetails() {
   const navigate = useNavigate();
 
   const { data: vehicle, isLoading, isError, error, refetch } = useGetVehicleDetails(vehicleId);
-  const { vehicles: allVehicles } = useAllVehicles();
   const { generateView } = useGenerateView();
   const { isSubmitting, generateLead } = useGenerateLead();
 
@@ -147,7 +144,6 @@ export default function CarDetails() {
 
   const images: string[] = vehicle.images && vehicle.images.length > 0 ? vehicle.images : [FALLBACK_IMG];
   const videos: string[] = vehicle.videos ?? [];
-  const related = allVehicles.filter((v) => v.brand === vehicle.brand && v.id !== vehicle.id).slice(0, 4);
 
   const prevImg = () => setActiveImg((i) => (i === 0 ? images.length - 1 : i - 1));
   const nextImg = () => setActiveImg((i) => (i === images.length - 1 ? 0 : i + 1));
@@ -343,22 +339,6 @@ export default function CarDetails() {
             </Card>
           </aside>
         </div>
-
-        {related.length > 0 && (
-          <section className="mt-14">
-            <h2 className="font-display text-xl md:text-2xl font-black mb-5">More {vehicle.brand} Cars</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-              {related.map((v) => (
-                <VehicleCard
-                  key={v.id}
-                  vehicle={v}
-                  isLoggedIn={!!customer}
-                  onWishlistRequireLogin={() => setAuthOpen(true)}
-                />
-              ))}
-            </div>
-          </section>
-        )}
       </div>
 
       {/* Contact Dealer Dialog */}

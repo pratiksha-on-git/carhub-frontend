@@ -5,7 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Phone, MessageCircle, Search, RefreshCw } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
+import { useDealerAuth } from "@/contexts/DealerAuthContext";
 import { useState } from "react";
 import type { LeadStatus } from "@/types";
 import { formatDate } from "@/utils/helpers";
@@ -20,7 +20,7 @@ const COLORS: Record<LeadStatus, string> = {
 };
 
 export default function DealerLeads() {
-  const { user } = useAuth();
+  const { user } = useDealerAuth();
   const dealerId = user?.id || "";
 
   const [searchQuery, setSearchQuery] = useState("");

@@ -11,8 +11,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { SEO } from "@/components/shared/SEO";
-import { useLogin, LoginError, decodeJwtPayload } from "@/hooks/auth/login";
-import { useAuth } from "@/contexts/AuthContext";
+import { useLogin, LoginError } from "@/hooks/auth/login";
+import { useAdminAuth } from "@/contexts/AdminAuthContext";
+import { useDealerAuth } from "@/contexts/DealerAuthContext";
 import { toast } from "sonner";
 import { useState } from "react";
 
@@ -23,7 +24,8 @@ type FormData = {
 
 export default function Login() {
   const { isLoggingIn, login } = useLogin();
-  const { setUserFromToken } = useAuth();
+  const { setUserFromToken: setAdmin } = useAdminAuth();
+  const { setUserFromToken: setDealer } = useDealerAuth();
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const form = useForm<FormData>({
@@ -33,7 +35,11 @@ export default function Login() {
   const onSubmit = async (data: FormData) => {
     try {
       const result = await login({ email: data.email, password: data.password });
-      setUserFromToken(result.role, result.data);
+      if (result.role === "admin") {
+        setAdmin(result.data);
+      } else {
+        setDealer(result.data);
+      }
 
       const payload = result.data as Record<string, any>;
       const dealerName = String(payload.businessName ?? payload.ownerName ?? payload.name ?? "Dealer");

@@ -2,12 +2,12 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { CarFront, Star, Inbox, Eye, TrendingUp, RefreshCw } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
+import { useDealerAuth } from "@/contexts/DealerAuthContext";
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, BarChart, Bar, CartesianGrid, Legend } from "recharts";
 import { useVehicleViews, useVehicleLeads, useDealerDashboard } from "@/hooks/dealer/useDealerDashboard";
 
 export default function DealerDashboard() {
-  const { user } = useAuth();
+  const { user } = useDealerAuth();
   const dealerId = user?.id?.toString() || "";
 
   const { data: dash, isLoading: dashLoading, refetch: refetchDash, isRefetching: dashRefetching } = useDealerDashboard(dealerId);
