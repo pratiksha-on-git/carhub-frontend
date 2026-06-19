@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { getAuthHeaders } from '@/lib/authHeaders';
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+import axios from 'axios';
+import apiClient from '@/lib/apiClient';
 
 export class VehicleStatusError extends Error {
   status: number;
@@ -16,20 +16,17 @@ export function useUpdateVehicleStatus(dealerId: string) {
 
   return useMutation<void, Error, { vehicleId: number; status: string }>({
     mutationFn: async ({ vehicleId, status }) => {
-      const response = await fetch(`${API_BASE_URL}/api/vehicle/status/${vehicleId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
-        body: JSON.stringify({ status }),
-      });
-
-      let body: any = null;
-      try { body = await response.json(); } catch { /* ignore */ }
-
-      if (!response.ok) {
-        throw new VehicleStatusError(
-          body?.message ?? "Failed to update vehicle status",
-          body?.status ?? response.status,
-        );
+      try {
+        await apiClient.patch(`/api/vehicle/status/${vehicleId}`, { status });
+      } catch (err) {
+        if (axios.isAxiosError(err)) {
+          const body = err.response?.data;
+          throw new VehicleStatusError(
+            body?.message ?? "Failed to update vehicle status",
+            body?.status ?? err.response?.status ?? 500,
+          );
+        }
+        throw err;
       }
     },
     onSuccess: () => {

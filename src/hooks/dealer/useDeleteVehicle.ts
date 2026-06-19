@@ -1,12 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { getAuthHeaders } from '@/lib/authHeaders';
-
-type ApiResponse<T> = {
-  status: number;
-  message: string;
-  data: T;
-};
+import axios from 'axios';
+import apiClient from '@/lib/apiClient';
 
 export class VehicleError extends Error {
   status: number;
@@ -17,41 +12,31 @@ export class VehicleError extends Error {
   }
 }
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-
 export function useDeleteVehicle(dealerId: string) {
   const queryClient = useQueryClient();
 
   return useMutation<any, Error, string>({
     mutationFn: async (vehicleId: string) => {
-      const response = await fetch(`${API_BASE_URL}/api/vehicle/delete/${vehicleId}`, {
-        method: 'DELETE',
-        headers: getAuthHeaders(),
-      });
-
-      let body: ApiResponse<any> | any = null;
       try {
-        body = await response.json();
-      } catch {
-        if (response.ok) return { message: "Vehicle Delete Successfully" };
-        throw new VehicleError("Server returned an invalid response.", response.status);
+        const { data: body } = await apiClient.delete(`/api/vehicle/delete/${vehicleId}`);
+        return body;
+      } catch (err) {
+        if (axios.isAxiosError(err)) {
+          const body = err.response?.data;
+          throw new VehicleError(
+            body?.message ?? "Failed to delete vehicle",
+            body?.status ?? err.response?.status ?? 500,
+          );
+        }
+        throw err;
       }
-
-      if (!response.ok) {
-        throw new VehicleError(
-          body?.message ?? "Failed to delete vehicle",
-          body?.status ?? response.status,
-        );
-      }
-
-      return body;
     },
     onSuccess: (data) => {
-      toast.success(data?.message ?? "Vehicle Delete Successfully");
+      toast.success(data?.message ?? "Vehicle deleted successfully");
       queryClient.invalidateQueries({ queryKey: ['vehicles', dealerId] });
     },
     onError: (error) => {
       toast.error(error.message ?? "Failed to remove vehicle");
-    }
+    },
   });
 }

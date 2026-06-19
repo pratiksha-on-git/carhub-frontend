@@ -161,7 +161,7 @@ export default function VehicleForm({ vehicleId, onSuccess, onCancel }: VehicleF
           <Select value={ownershipDetails} onValueChange={setOwnershipDetails} required>
             <SelectTrigger className="mt-1"><SelectValue placeholder="Select Ownership" /></SelectTrigger>
             <SelectContent>
-              {["First Owner", "Second Owner", "Third Owner"].map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}
+              {["First Owner", "Second Owner", "Third Owner", "Others"].map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}
             </SelectContent>
           </Select>
         </div>

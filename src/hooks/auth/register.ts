@@ -1,4 +1,6 @@
 import * as React from "react";
+import axios from "axios";
+import apiClient from "@/lib/apiClient";
 
 type DealerRegistrationPayload = {
   businessName: string;
@@ -33,9 +35,6 @@ export class ApiError extends Error {
   }
 }
 
-const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL;
-
 export function useRegister() {
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
@@ -51,33 +50,18 @@ export function useRegister() {
         formData.append("dealerLogo", dealerLogo);
         formData.append("showroomImage", showroomImage);
 
-        const response = await fetch(`${API_BASE_URL}/api/dealer/register`, {
-          method: "POST",
-          body: formData,
-        });
-
-        // Try to parse body as JSON regardless of status
-        let body: {
-          message?: string;
-          status?: number;
-          errors?: Record<string, string>;
-          data?: unknown;
-        } = {};
-        try {
-          body = await response.json();
-        } catch {
-          // Non-JSON body — fall back to status text
-        }
-
-        if (!response.ok) {
+        const { data: body } = await apiClient.post("/api/dealer/register", formData);
+        return body;
+      } catch (err) {
+        if (axios.isAxiosError(err)) {
+          const body = err.response?.data;
           throw new ApiError(
-            body.message ?? response.statusText,
-            body.status ?? response.status,
-            body.errors,
+            body?.message ?? err.message,
+            body?.status ?? err.response?.status ?? 500,
+            body?.errors,
           );
         }
-
-        return body;
+        throw err;
       } finally {
         setIsSubmitting(false);
       }

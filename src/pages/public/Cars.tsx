@@ -1,6 +1,6 @@
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Filter as FilterIcon, Search, X } from "lucide-react";
+import { Filter as FilterIcon, Search, X, AlertCircle, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -10,8 +10,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { VehicleCard, VehicleCardSkeleton } from "@/components/cards/VehicleCard";
 import { SEO } from "@/components/shared/SEO";
-import { vehicleService } from "@/services/vehicleService";
-import { BRANDS, CITIES, FUELS, TRANSMISSIONS, OWNERSHIPS } from "@/data/vehicles";
+import { useAllVehicles } from "@/hooks/public/useAllVehicles";
 import { BUDGET_BANDS } from "@/utils/constants";
 import { formatINR } from "@/utils/helpers";
 import type { Vehicle } from "@/types";
@@ -20,10 +19,8 @@ const PAGE = 12;
 
 export default function Cars() {
   const [params, setParams] = useSearchParams();
-  const all = useMemo(() => vehicleService.list(), []);
-  const [loading, setLoading] = useState(true);
+  const { vehicles: all, loading, error, refetch } = useAllVehicles();
   const [page, setPage] = useState(1);
-  useEffect(() => { const t = setTimeout(() => setLoading(false), 350); return () => clearTimeout(t); }, []);
 
   const get = (k: string) => params.get(k) || "";
   const set = (k: string, v: string) => {
@@ -48,26 +45,38 @@ export default function Cars() {
 
   const budget = BUDGET_BANDS.find((b) => b.label === budgetLabel);
 
+  // Derive dynamic filter options from the fetched data
+  const BRANDS = useMemo(() => [...new Set(all.map((v) => v.brand))].sort(), [all]);
+  const CITIES = useMemo(() => [...new Set(all.map((v) => v.city))].sort(), [all]);
+  const FUELS = useMemo(() => [...new Set(all.map((v) => v.fuelType))].sort(), [all]);
+  const TRANSMISSIONS = useMemo(() => [...new Set(all.map((v) => v.transmission))].sort(), [all]);
+  const OWNERSHIPS = useMemo(() => [...new Set(all.map((v) => v.ownershipDetails))].sort(), [all]);
+
   const filtered = useMemo(() => {
     let list: Vehicle[] = all;
     if (brand) list = list.filter((v) => v.brand === brand);
     if (city) list = list.filter((v) => v.city === city);
-    if (fuel) list = list.filter((v) => v.fuel === fuel);
+    if (fuel) list = list.filter((v) => v.fuelType === fuel);
     if (transmission) list = list.filter((v) => v.transmission === transmission);
-    if (ownership) list = list.filter((v) => v.ownership === ownership);
-    if (minYear) list = list.filter((v) => v.year >= minYear);
-    if (maxKm) list = list.filter((v) => v.kmDriven <= maxKm);
-    if (budget) list = list.filter((v) => v.price >= budget.min && v.price < budget.max);
-    if (minPrice || maxPrice < 5000000) list = list.filter((v) => v.price >= minPrice && v.price <= maxPrice);
+    if (ownership) list = list.filter((v) => v.ownershipDetails === ownership);
+    if (minYear) list = list.filter((v) => v.registrationYear >= minYear);
+    if (maxKm) list = list.filter((v) => v.kilometerDriven <= maxKm);
+    if (budget) list = list.filter((v) => v.askingPrice >= budget.min && v.askingPrice < budget.max);
+    if (minPrice || maxPrice < 5000000) list = list.filter((v) => v.askingPrice >= minPrice && v.askingPrice <= maxPrice);
     if (q) {
       const s = q.toLowerCase();
-      list = list.filter((v) => v.title.toLowerCase().includes(s) || v.brand.toLowerCase().includes(s) || v.model.toLowerCase().includes(s) || v.city.toLowerCase().includes(s));
+      list = list.filter((v) =>
+        v.brand.toLowerCase().includes(s) ||
+        v.model.toLowerCase().includes(s) ||
+        v.variant.toLowerCase().includes(s) ||
+        v.city.toLowerCase().includes(s)
+      );
     }
     switch (sort) {
-      case "price-asc": list = [...list].sort((a, b) => a.price - b.price); break;
-      case "price-desc": list = [...list].sort((a, b) => b.price - a.price); break;
-      case "year-desc": list = [...list].sort((a, b) => b.year - a.year); break;
-      case "km-asc": list = [...list].sort((a, b) => a.kmDriven - b.kmDriven); break;
+      case "price-asc": list = [...list].sort((a, b) => a.askingPrice - b.askingPrice); break;
+      case "price-desc": list = [...list].sort((a, b) => b.askingPrice - a.askingPrice); break;
+      case "year-desc": list = [...list].sort((a, b) => b.registrationYear - a.registrationYear); break;
+      case "km-asc": list = [...list].sort((a, b) => a.kilometerDriven - b.kilometerDriven); break;
       default: list = [...list].sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt));
     }
     return list;
@@ -82,22 +91,28 @@ export default function Cars() {
         <Label className="text-xs uppercase tracking-wide text-muted-foreground">Search</Label>
         <div className="relative mt-1.5">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input value={q} onChange={(e) => set("q", e.target.value)} placeholder="Title, brand, city…" className="pl-9" />
+          <Input value={q} onChange={(e) => set("q", e.target.value)} placeholder="Brand, model, city…" className="pl-9" />
         </div>
       </div>
       <FilterGroup label="Brand" value={brand} setValue={(v) => set("brand", v)} options={BRANDS} />
       <FilterGroup label="City" value={city} setValue={(v) => set("city", v)} options={CITIES} />
-      <FilterGroup label="Fuel" value={fuel} setValue={(v) => set("fuel", v)} options={[...FUELS]} />
-      <FilterGroup label="Transmission" value={transmission} setValue={(v) => set("transmission", v)} options={[...TRANSMISSIONS]} />
-      <FilterGroup label="Ownership" value={ownership} setValue={(v) => set("ownership", v)} options={[...OWNERSHIPS]} />
+      <FilterGroup label="Fuel" value={fuel} setValue={(v) => set("fuel", v)} options={FUELS} />
+      <FilterGroup label="Transmission" value={transmission} setValue={(v) => set("transmission", v)} options={TRANSMISSIONS} />
+      <FilterGroup label="Ownership" value={ownership} setValue={(v) => set("ownership", v)} options={OWNERSHIPS} />
 
       <div>
         <Label className="text-xs uppercase tracking-wide text-muted-foreground">Price range</Label>
         <div className="mt-3 px-1">
-          <Slider min={0} max={5000000} step={50000} value={[minPrice, maxPrice]}
-            onValueChange={([lo, hi]) => { set("minPrice", String(lo)); set("maxPrice", String(hi)); }} />
+          <Slider
+            min={0}
+            max={5000000}
+            step={50000}
+            value={[minPrice, maxPrice]}
+            onValueChange={([lo, hi]) => { set("minPrice", String(lo)); set("maxPrice", String(hi)); }}
+          />
           <div className="flex justify-between text-xs text-muted-foreground mt-2">
-            <span>{formatINR(minPrice)}</span><span>{formatINR(maxPrice)}</span>
+            <span>{formatINR(minPrice)}</span>
+            <span>{formatINR(maxPrice)}</span>
           </div>
         </div>
       </div>
@@ -133,17 +148,24 @@ export default function Cars() {
 
   return (
     <>
-      <SEO title="Browse Used Cars — AutoHub India" description="Search 25,000+ verified used cars by brand, city, fuel, transmission and budget. Direct dealer contact." />
+      <SEO
+        title="Browse Used Cars — AutoHub India"
+        description="Search verified used cars by brand, city, fuel, transmission and budget. Direct dealer contact."
+      />
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex items-end justify-between gap-4 flex-wrap mb-6">
           <div>
             <h1 className="font-display text-2xl md:text-3xl font-black">Browse Used Cars</h1>
-            <p className="text-sm text-muted-foreground mt-1">{filtered.length} verified vehicles available</p>
+            <p className="text-sm text-muted-foreground mt-1">
+              {loading ? "Loading vehicles…" : `${filtered.length} verified vehicles available`}
+            </p>
           </div>
           <div className="flex items-center gap-2">
             <Sheet>
               <SheetTrigger asChild>
-                <Button variant="outline" className="lg:hidden gap-2"><FilterIcon className="h-4 w-4" /> Filters</Button>
+                <Button variant="outline" className="lg:hidden gap-2">
+                  <FilterIcon className="h-4 w-4" /> Filters
+                </Button>
               </SheetTrigger>
               <SheetContent side="left" className="w-[88vw] sm:w-[400px] overflow-y-auto">
                 <SheetHeader><SheetTitle>Filters</SheetTitle></SheetHeader>
@@ -169,27 +191,55 @@ export default function Cars() {
               <Filters />
             </div>
           </aside>
+
           <div className="min-w-0">
-            {loading ? (
+            {/* Error state */}
+            {error && (
+              <div className="flex flex-col items-center justify-center py-16 bg-card rounded-2xl border border-destructive/30 text-center gap-4">
+                <AlertCircle className="h-10 w-10 text-destructive" />
+                <div>
+                  <h3 className="font-bold text-lg">Failed to load vehicles</h3>
+                  <p className="text-sm text-muted-foreground mt-1">{error}</p>
+                </div>
+                <Button onClick={refetch} className="gap-2">
+                  <RefreshCw className="h-4 w-4" /> Retry
+                </Button>
+              </div>
+            )}
+
+            {/* Loading state */}
+            {!error && loading && (
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
                 {Array.from({ length: 6 }).map((_, i) => <VehicleCardSkeleton key={i} />)}
               </div>
-            ) : paged.length === 0 ? (
+            )}
+
+            {/* Empty state */}
+            {!error && !loading && paged.length === 0 && (
               <div className="text-center py-20 bg-card rounded-2xl border border-border">
                 <h3 className="font-display font-bold text-lg">No vehicles match your filters</h3>
                 <p className="text-sm text-muted-foreground mt-1">Try clearing some filters or broadening your search.</p>
-                <Button className="mt-4" onClick={() => setParams(new URLSearchParams(), { replace: true })}>Clear filters</Button>
+                <Button className="mt-4" onClick={() => setParams(new URLSearchParams(), { replace: true })}>
+                  Clear filters
+                </Button>
               </div>
-            ) : (
+            )}
+
+            {/* Vehicle grid */}
+            {!error && !loading && paged.length > 0 && (
               <>
                 <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
                   {paged.map((v) => <VehicleCard key={v.id} vehicle={v} />)}
                 </div>
                 {totalPages > 1 && (
                   <div className="mt-8 flex items-center justify-center gap-2">
-                    <Button variant="outline" size="sm" disabled={page === 1} onClick={() => setPage(page - 1)}>Previous</Button>
+                    <Button variant="outline" size="sm" disabled={page === 1} onClick={() => setPage(page - 1)}>
+                      Previous
+                    </Button>
                     <span className="text-sm text-muted-foreground px-3">Page {page} of {totalPages}</span>
-                    <Button variant="outline" size="sm" disabled={page === totalPages} onClick={() => setPage(page + 1)}>Next</Button>
+                    <Button variant="outline" size="sm" disabled={page === totalPages} onClick={() => setPage(page + 1)}>
+                      Next
+                    </Button>
                   </div>
                 )}
               </>
@@ -201,7 +251,17 @@ export default function Cars() {
   );
 }
 
-function FilterGroup({ label, value, setValue, options }: { label: string; value: string; setValue: (v: string) => void; options: string[] }) {
+function FilterGroup({
+  label,
+  value,
+  setValue,
+  options,
+}: {
+  label: string;
+  value: string;
+  setValue: (v: string) => void;
+  options: string[];
+}) {
   return (
     <div>
       <Label className="text-xs uppercase tracking-wide text-muted-foreground">{label}</Label>

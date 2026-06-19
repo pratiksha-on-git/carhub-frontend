@@ -11,8 +11,7 @@ import { ProtectedRoute } from "@/components/shared/ProtectedRoute";
 import Home from "@/pages/public/Home";
 import Cars from "@/pages/public/Cars";
 import CarDetails from "@/pages/public/CarDetails";
-import Dealers from "@/pages/public/Dealers";
-import SubscriptionPlans from "@/pages/public/SubscriptionPlans";
+
 import Contact from "@/pages/public/Contact";
 import Login from "@/pages/auth/Login";
 import Register from "@/pages/auth/Register";
@@ -45,9 +44,8 @@ export default function App() {
           <Route element={<PublicLayout />}>
             <Route index element={<Home />} />
             <Route path="/cars" element={<Cars />} />
-            <Route path="/car/:slug" element={<CarDetails />} />
-            <Route path="/dealers" element={<Dealers />} />
-            <Route path="/subscription-plans" element={<SubscriptionPlans />} />
+            <Route path="/car/:id" element={<CarDetails />} />
+
             <Route path="/contact" element={<Contact />} />
           </Route>
 
@@ -64,7 +62,7 @@ export default function App() {
               <Route path="vehicles/:vehicleId" element={<DealerVehicleDetails />} />
               <Route path="leads" element={<DealerLeads />} />
               <Route path="profile" element={<DealerProfile />} />
-            
+
               <Route path="subscription" element={<DealerSubscription />} />
             </Route>
           </Route>

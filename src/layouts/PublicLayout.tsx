@@ -8,8 +8,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 const nav = [
   { to: "/", label: "Home" },
   { to: "/cars", label: "Browse Cars" },
-  { to: "/dealers", label: "Dealers" },
-  { to: "/subscription-plans", label: "Plans" },
+
   { to: "/contact", label: "Contact" },
 ];
 
@@ -110,8 +109,7 @@ export default function PublicLayout() {
             <h4 className="font-bold mb-3">Explore</h4>
             <ul className="space-y-2 text-sm text-white/70">
               <li><Link to="/cars" className="hover:text-white">Browse Cars</Link></li>
-              <li><Link to="/dealers" className="hover:text-white">Find Dealers</Link></li>
-              <li><Link to="/subscription-plans" className="hover:text-white">Subscription Plans</Link></li>
+    
               <li><Link to="/auth/register" className="hover:text-white">Dealer Registration</Link></li>
             </ul>
           </div>

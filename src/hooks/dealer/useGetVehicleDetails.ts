@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
+import axios from 'axios';
 import type { Vehicle } from '@/types';
-import { getAuthHeaders } from '@/lib/authHeaders';
+import apiClient from '@/lib/apiClient';
 
 type ApiResponse<T> = {
   status: number;
@@ -17,32 +18,26 @@ export class VehicleError extends Error {
   }
 }
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-
 export function useGetVehicleDetails(vehicleId?: number) {
   return useQuery<Vehicle, Error>({
     queryKey: ['vehicle', vehicleId],
     queryFn: async () => {
       if (!vehicleId) throw new Error("No vehicle ID provided");
-      const response = await fetch(`${API_BASE_URL}/api/vehicle/${vehicleId}`, {
-        headers: getAuthHeaders(),
-      });
-      
-      let body: ApiResponse<Vehicle> | any = null;
       try {
-        body = await response.json();
-      } catch {
-        throw new VehicleError("Server returned an invalid response.", response.status);
-      }
-
-      if (!response.ok) {
-        throw new VehicleError(
-          body?.message ?? "Failed to fetch vehicle details",
-          body?.status ?? response.status,
+        const { data: body } = await apiClient.get<ApiResponse<Vehicle>>(
+          `/api/vehicle/${vehicleId}`,
         );
+        return body?.data !== undefined ? body.data : (body as unknown as Vehicle);
+      } catch (err) {
+        if (axios.isAxiosError(err)) {
+          const body = err.response?.data;
+          throw new VehicleError(
+            body?.message ?? "Failed to fetch vehicle details",
+            body?.status ?? err.response?.status ?? 500,
+          );
+        }
+        throw err;
       }
-
-      return body?.data !== undefined ? body.data : body;
     },
     enabled: !!vehicleId,
   });

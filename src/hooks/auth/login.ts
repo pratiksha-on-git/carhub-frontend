@@ -1,18 +1,12 @@
 import * as React from "react";
+import axios from "axios";
+import apiClient from "@/lib/apiClient";
 
 type LoginPayload = {
   email: string;
   password: string;
 };
 
-/** Shape of the API response wrapper */
-type ApiResponse<T> = {
-  status: number;
-  message: string;
-  data: T;
-};
-
-/** Shape of the login data inside the response */
 type LoginData = {
   token: string;
 };
@@ -43,44 +37,24 @@ export function decodeJwtPayload(token: string): Record<string, unknown> {
   }
 }
 
-const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL;
-
 export function useLogin() {
   const [isLoggingIn, setIsLoggingIn] = React.useState(false);
 
-  /**
-   * Unified login — hits POST /api/auth/login.
-   * Decodes the JWT to determine role ("ADMIN" or "DEALER")
-   * and stores the token + decoded data in localStorage.
-   */
   const login = React.useCallback(async (payload: LoginPayload) => {
     setIsLoggingIn(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
+      const { data: body } = await apiClient.post<{ status: number; message: string; data: LoginData }>(
+        "/api/auth/login",
+        payload,
+      );
 
-      let body: ApiResponse<LoginData> | null = null;
-      try {
-        body = await response.json();
-      } catch {
-        throw new LoginError("Server returned an invalid response.", response.status);
+      const token = body?.data?.token;
+      if (!token) {
+        throw new LoginError(body?.message ?? "Login failed — no token received", body?.status ?? 401);
       }
 
-      if (!response.ok || !body?.data?.token) {
-        throw new LoginError(
-          body?.message ?? "Login failed",
-          body?.status ?? response.status,
-        );
-      }
-
-      const token = body.data.token;
       const decoded = decodeJwtPayload(token);
 
-      // Role is stored as "ADMIN" or "DEALER" (or "ROLE_ADMIN" etc.) in the JWT
       const rawRole = String(
         decoded.role ?? decoded.roles ?? decoded.authority ?? "",
       ).toUpperCase();
@@ -95,18 +69,25 @@ export function useLogin() {
       if (isAdmin) {
         localStorage.setItem("adminToken", token);
         localStorage.setItem("adminData", JSON.stringify(decoded));
-        // Clear any stale dealer session
         localStorage.removeItem("dealerToken");
         localStorage.removeItem("dealerData");
         return { role: "admin" as const, token, data: decoded };
       } else {
         localStorage.setItem("dealerToken", token);
         localStorage.setItem("dealerData", JSON.stringify(decoded));
-        // Clear any stale admin session
         localStorage.removeItem("adminToken");
         localStorage.removeItem("adminData");
         return { role: "dealer" as const, token, data: decoded };
       }
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        const body = err.response?.data;
+        throw new LoginError(
+          body?.message ?? "Login failed",
+          body?.status ?? err.response?.status ?? 500,
+        );
+      }
+      throw err;
     } finally {
       setIsLoggingIn(false);
     }
