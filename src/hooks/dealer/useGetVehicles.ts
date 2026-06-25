@@ -25,10 +25,15 @@ export function useGetVehicles(dealerId: string) {
         return Array.isArray(data) ? data : [];
       } catch (err) {
         if (axios.isAxiosError(err)) {
+          const status = err.response?.status;
           const body = err.response?.data;
+          const message = (body?.message ?? "").toLowerCase();
+          if (status === 404 || message.includes("not found") || message.includes("no vehicle")) {
+            return [];
+          }
           throw new VehicleError(
             body?.message ?? "Failed to fetch vehicles",
-            body?.status ?? err.response?.status ?? 500,
+            body?.status ?? status ?? 500,
           );
         }
         throw err;

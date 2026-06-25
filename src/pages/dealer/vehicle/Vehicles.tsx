@@ -68,6 +68,9 @@ export default function DealerVehicles() {
   const handleRemove = async (id: number) => {
     setDeletingId(id);
     deleteMutation.mutate(id.toString(), {
+      onSuccess: () => {
+        refetch();
+      },
       onSettled: () => setDeletingId(null),
     });
   };
@@ -76,7 +79,10 @@ export default function DealerVehicles() {
     statusMutation.mutate(
       { vehicleId, status },
       {
-        onSuccess: () => toast.success("Status updated"),
+        onSuccess: () => {
+          toast.success("Status updated");
+          refetch();
+        },
         onError: (err) => toast.error(err.message),
       },
     );
@@ -85,6 +91,7 @@ export default function DealerVehicles() {
   const handleSuccess = () => {
     setIsModalOpen(false);
     setSelectedVehicleId(null);
+    refetch();
   };
 
   const filteredVehicles = vehicles.filter((v) => {
@@ -338,8 +345,8 @@ export default function DealerVehicles() {
                               {v.vehicleType && (
                                 <Badge
                                   className={`${v.vehicleType === "PREMIUM"
-                                      ? "bg-amber-100 text-amber-700 hover:bg-amber-100"
-                                      : "bg-slate-100 text-slate-700 hover:bg-slate-100"
+                                    ? "bg-amber-100 text-amber-700 hover:bg-amber-100"
+                                    : "bg-slate-100 text-slate-700 hover:bg-slate-100"
                                     } border-0 text-[10px] px-1.5 py-0.5 font-bold rounded`}
                                 >
                                   {v.vehicleType}
@@ -372,10 +379,10 @@ export default function DealerVehicles() {
                         >
                           <SelectTrigger
                             className={`h-8 w-[110px] text-[11px] font-bold border-0 rounded-full px-3 py-1 shadow-sm shrink-0 cursor-pointer ${v.vehicleStatus === "ACTIVE"
-                                ? "bg-emerald-50 text-emerald-700 hover:bg-emerald-100/80"
-                                : v.vehicleStatus === "INACTIVE"
-                                  ? "bg-rose-50 text-rose-700 hover:bg-rose-100/80"
-                                  : "bg-amber-50 text-amber-700 hover:bg-amber-100/80"
+                              ? "bg-emerald-50 text-emerald-700 hover:bg-emerald-100/80"
+                              : v.vehicleStatus === "INACTIVE"
+                                ? "bg-rose-50 text-rose-700 hover:bg-rose-100/80"
+                                : "bg-amber-50 text-amber-700 hover:bg-amber-100/80"
                               }`}
                           >
                             <SelectValue />

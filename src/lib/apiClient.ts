@@ -18,7 +18,7 @@ apiClient.interceptors.request.use((config) => {
     : (localStorage.getItem("dealerToken") ??
       localStorage.getItem("adminToken") ??
       "");
-  if (token) {
+  if (token && !config.headers.Authorization) {
     config.headers.Authorization = `Bearer ${token}`;
   }
   return config;

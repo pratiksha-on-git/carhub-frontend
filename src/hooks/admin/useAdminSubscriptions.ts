@@ -34,8 +34,13 @@ export function useApprovePayment() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (paymentId: number) => {
+      const token = localStorage.getItem("adminToken");
       const { data: body } = await apiClient.put(
         `/api/payment/success/${paymentId}`,
+        {},
+        {
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        },
       );
       return body;
     },
