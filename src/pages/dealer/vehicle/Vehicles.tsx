@@ -199,7 +199,7 @@ export default function DealerVehicles() {
               placeholder="Search vehicles..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 h-10 bg-white rounded-xl w-full"
+              className="pl-9 h-10 bg-white rounded-xl w-full "
             />
           </div>
 
@@ -241,8 +241,8 @@ export default function DealerVehicles() {
       <Card className="border border-slate-100 shadow-premium rounded-2xl overflow-hidden bg-white">
         <CardContent className="p-0 overflow-x-auto">
           <Table className="min-w-[900px]">
-            <TableHeader className="bg-blue-900 border-b border-blue-900">
-              <TableRow className="bg-blue-900 hover:bg-blue-900 border-none">
+            <TableHeader className="bg-black border-b border-black">
+              <TableRow className="bg-black hover:bg-black border-none">
                 <TableHead className="w-16 text-center text-xs font-bold text-slate-100 uppercase tracking-wider py-4">
                   Sr No
                 </TableHead>
@@ -463,7 +463,7 @@ export default function DealerVehicles() {
       </Card>
 
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="sm:max-w-5xl">
+        <DialogContent className="sm:max-w-5xl bg-white">
           <DialogHeader>
             <DialogTitle>
               {selectedVehicleId ? "Update Vehicle" : "Add New Vehicle"}

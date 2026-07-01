@@ -22,15 +22,25 @@ import {
   Lock,
   CheckCircle2,
   ShieldAlert,
+  Mail,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import { useGetDealerProfile } from "@/hooks/dealer/useGetDealerProfile";
 import { useUpdateDealerProfile } from "@/hooks/dealer/useUpdateDealerProfile";
 import {
-  useSendOtp,
-  useVerifyOtp,
-  useResetPassword,
-} from "@/hooks/dealer/useChangePassword";
+  useCustomerSendOtp,
+  useCustomerVerifyOtp,
+  useCustomerResetPassword,
+} from "@/hooks/auth/resetPassword";
+
 import { formatDate } from "@/utils/helpers";
+import {
+  InputOTP,
+  InputOTPGroup,
+  InputOTPSlot,
+} from "@/components/ui/input-otp";
+import { REGEXP_ONLY_DIGITS } from "input-otp";
 
 export default function DealerProfile() {
   const { user, updateUserFields } = useDealerAuth();
@@ -88,29 +98,28 @@ export default function DealerProfile() {
     } catch (err: any) {
       toast.error(
         err?.response?.data?.message ||
-          (err instanceof Error ? err.message : String(err))
+        (err instanceof Error ? err.message : String(err))
       );
     }
   };
 
   // Change password flow
   const [pwModal, setPwModal] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [step, setStep] = useState<"send" | "verify" | "reset">("send");
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
-  const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
-  const sendOtpMutation = useSendOtp();
-  const verifyOtpMutation = useVerifyOtp();
-  const resetPasswordMutation = useResetPassword();
+  const { isPending: sendingOtp, sendOtp } = useCustomerSendOtp();
+  const { isPending: verifyingOtp, verifyOtp } = useCustomerVerifyOtp();
+  const { isPending: resettingPassword, resetPassword } = useCustomerResetPassword();
 
   const openPasswordModal = () => {
     setStep("send");
     setEmail(profile?.email || "");
     setOtp("");
-    setOldPassword("");
     setNewPassword("");
     setConfirmPassword("");
     setPwModal(true);
@@ -119,7 +128,7 @@ export default function DealerProfile() {
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const res = await sendOtpMutation.mutateAsync(email);
+      const res = await sendOtp(email);
       toast.success(
         typeof res === "string"
           ? res
@@ -127,17 +136,14 @@ export default function DealerProfile() {
       );
       setStep("verify");
     } catch (err: any) {
-      toast.error(
-        err?.response?.data?.message ||
-          (err instanceof Error ? err.message : String(err))
-      );
+      toast.error(err?.message || "Failed to send OTP");
     }
   };
 
   const handleVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const res = await verifyOtpMutation.mutateAsync({ email, otp });
+      const res = await verifyOtp({ email, otp });
       toast.success(
         typeof res === "string"
           ? res
@@ -145,10 +151,7 @@ export default function DealerProfile() {
       );
       setStep("reset");
     } catch (err: any) {
-      toast.error(
-        err?.response?.data?.message ||
-          (err instanceof Error ? err.message : String(err))
-      );
+      toast.error(err?.message || "Failed to verify OTP");
     }
   };
 
@@ -159,11 +162,7 @@ export default function DealerProfile() {
       return;
     }
     try {
-      const res = await resetPasswordMutation.mutateAsync({
-        email,
-        oldPassword,
-        newPassword,
-      });
+      const res = await resetPassword({ email, otp, newPassword });
       toast.success(
         typeof res === "string"
           ? res
@@ -171,10 +170,7 @@ export default function DealerProfile() {
       );
       setPwModal(false);
     } catch (err: any) {
-      toast.error(
-        err?.response?.data?.message ||
-          (err instanceof Error ? err.message : String(err))
-      );
+      toast.error(err?.message || "Failed to reset password");
     }
   };
 
@@ -468,112 +464,142 @@ export default function DealerProfile() {
 
       {/* Change Password Modal */}
       <Dialog open={pwModal} onOpenChange={setPwModal}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>
+        <DialogContent className="p-6 sm:p-10 overflow-hidden max-w-[95vw] sm:max-w-md border-none rounded-3xl shadow-2xl bg-white text-slate-900">
+          <DialogHeader className="space-y-1.5 pb-2">
+            <DialogTitle className="font-display text-2xl font-black tracking-tight text-slate-900">
               {step === "send" && "Change Password"}
               {step === "verify" && "Verify OTP"}
               {step === "reset" && "Set New Password"}
             </DialogTitle>
+            <p className="text-xs text-slate-500 leading-relaxed">
+              {step === "send"
+                ? "Enter your email address to receive a verification OTP code."
+                : step === "verify"
+                  ? "Enter the 6-digit OTP code sent to your email."
+                  : "Enter your current password and set a secure new password."}
+            </p>
           </DialogHeader>
 
           {/* Step indicators */}
-          <div className="flex items-center gap-2 mb-2">
+          <div className="flex items-center gap-2 mb-2 p-1.5 rounded-2xl bg-slate-50 border border-slate-100 shadow-inner">
             {(["send", "verify", "reset"] as const).map((s, i) => (
               <div key={s} className="flex items-center gap-2">
                 <div
-                  className={`h-7 w-7 rounded-full flex items-center justify-center text-xs font-bold ${step === s
-                    ? "gradient-primary text-white"
+                  className={`h-7 w-7 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 ${step === s
+                    ? "gradient-primary text-white shadow-sm"
                     : (step === "verify" && i === 0) ||
                       (step === "reset" && i <= 1)
-                      ? "bg-green-100 text-green-700"
-                      : "bg-muted text-muted-foreground"
+                      ? "bg-emerald-100 text-emerald-800"
+                      : "bg-slate-200 text-slate-500"
                     }`}
                 >
                   {i + 1}
                 </div>
-                {i < 2 && <div className="h-px w-8 bg-muted" />}
+                {i < 2 && <div className="h-px w-8 bg-slate-200" />}
               </div>
             ))}
-            <span className="ml-2 text-xs text-muted-foreground">
+            <span className="ml-auto text-[10px] font-black uppercase tracking-wider text-slate-400">
               {step === "send"
-                ? "Enter email"
+                ? "Step 1 of 3"
                 : step === "verify"
-                  ? "Enter OTP"
-                  : "Set password"}
+                  ? "Step 2 of 3"
+                  : "Step 3 of 3"}
             </span>
           </div>
 
           {/* Step 1: Send OTP */}
           {step === "send" && (
             <form onSubmit={handleSendOtp} className="space-y-4">
-              <div>
-                <Label>Email</Label>
-                <Input
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  type="email"
-                  className="mt-1 rounded-xl"
-                  required
-                />
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold text-slate-500 uppercase tracking-wider pl-0.5">Email Address</Label>
+                <div className="relative group">
+                  <Mail className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 group-focus-within:text-rose-900 transition-colors duration-200" />
+                  <Input
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    type="email"
+                    placeholder="name@dealership.com"
+                    className="h-12 pl-11 rounded-xl bg-slate-50/50 border-slate-200 hover:bg-slate-100/30 text-slate-900 focus-visible:ring-rose-900/15 focus-visible:border-rose-900 transition-all duration-200 placeholder:text-slate-400/60"
+                    required
+                  />
+                </div>
               </div>
               <Button
                 type="submit"
-                className="w-full gradient-primary text-white border-0 rounded-xl"
-                disabled={sendOtpMutation.isPending}
+                className="w-full h-12 rounded-xl gradient-primary text-white border-0 font-bold shadow-md hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 cursor-pointer"
+                disabled={sendingOtp}
               >
-                {sendOtpMutation.isPending && (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                {sendingOtp ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Sending OTP…
+                  </>
+                ) : (
+                  "Send OTP"
                 )}
-                Send OTP
               </Button>
             </form>
           )}
 
           {/* Step 2: Verify OTP */}
           {step === "verify" && (
-            <form onSubmit={handleVerifyOtp} className="space-y-4">
-              <p className="text-sm text-muted-foreground">
-                OTP sent to{" "}
-                <span className="font-medium text-foreground">{email}</span>
+            <form onSubmit={handleVerifyOtp} className="space-y-5">
+              <p className="text-xs font-semibold text-slate-500 text-center">
+                OTP sent to <span className="text-slate-900 font-bold">{email}</span>
               </p>
-              <div>
-                <Label>Enter OTP</Label>
-                <Input
-                  value={otp}
-                  onChange={(e) => setOtp(e.target.value)}
-                  placeholder="6-digit OTP"
+
+              <div className="flex justify-center py-2">
+                <InputOTP
                   maxLength={6}
-                  className="mt-1 rounded-xl tracking-widest text-center text-lg"
-                  required
-                />
+                  pattern={REGEXP_ONLY_DIGITS}
+                  value={otp}
+                  onChange={setOtp}
+                >
+                  <InputOTPGroup className="gap-2">
+                    <InputOTPSlot index={0} className="h-12 w-12 rounded-xl border border-slate-200 text-center font-bold text-lg text-slate-900 bg-slate-50" />
+                    <InputOTPSlot index={1} className="h-12 w-12 rounded-xl border border-slate-200 text-center font-bold text-lg text-slate-900 bg-slate-50" />
+                    <InputOTPSlot index={2} className="h-12 w-12 rounded-xl border border-slate-200 text-center font-bold text-lg text-slate-900 bg-slate-50" />
+                    <InputOTPSlot index={3} className="h-12 w-12 rounded-xl border border-slate-200 text-center font-bold text-lg text-slate-900 bg-slate-50" />
+                    <InputOTPSlot index={4} className="h-12 w-12 rounded-xl border border-slate-200 text-center font-bold text-lg text-slate-900 bg-slate-50" />
+                    <InputOTPSlot index={5} className="h-12 w-12 rounded-xl border border-slate-200 text-center font-bold text-lg text-slate-900 bg-slate-50" />
+                  </InputOTPGroup>
+                </InputOTP>
               </div>
-              <div className="flex gap-2">
+
+              <div className="flex gap-3">
                 <Button
                   type="button"
                   variant="outline"
-                  className="flex-1 rounded-xl"
+                  className="flex-1 h-12 rounded-xl font-bold cursor-pointer border-slate-200 text-slate-700"
                   onClick={() => setStep("send")}
                 >
                   Back
                 </Button>
                 <Button
                   type="submit"
-                  className="flex-1 gradient-primary text-white border-0 rounded-xl"
-                  disabled={verifyOtpMutation.isPending}
+                  className="flex-[1.8] h-12 rounded-xl gradient-primary text-white border-0 font-bold shadow-md hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 cursor-pointer"
+                  disabled={verifyingOtp}
                 >
-                  {verifyOtpMutation.isPending && (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  {verifyingOtp ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Verifying…
+                    </>
+                  ) : (
+                    "Verify OTP"
                   )}
-                  Verify OTP
                 </Button>
               </div>
+
               <button
                 type="button"
-                className="text-xs text-primary underline w-full text-center"
+                className="text-xs text-rose-900 font-bold hover:underline w-full text-center hover:text-rose-950 bg-transparent border-0 cursor-pointer transition-colors block mt-2"
                 onClick={handleSendOtp as any}
-                disabled={sendOtpMutation.isPending}
+                disabled={sendingOtp}
               >
+                {sendingOtp && (
+                  <Loader2 className="h-3 w-3 animate-spin inline mr-1" />
+                )}
                 Resend OTP
               </button>
             </form>
@@ -582,45 +608,52 @@ export default function DealerProfile() {
           {/* Step 3: Reset Password */}
           {step === "reset" && (
             <form onSubmit={handleResetPassword} className="space-y-4">
-              <div>
-                <Label>Current Password</Label>
-                <Input
-                  value={oldPassword}
-                  onChange={(e) => setOldPassword(e.target.value)}
-                  type="password"
-                  className="mt-1 rounded-xl"
-                  required
-                />
+
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold text-slate-500 uppercase tracking-wider pl-0.5">New Password</Label>
+                <div className="relative group">
+                  <Lock className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 group-focus-within:text-rose-900 transition-colors duration-200" />
+                  <Input
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Min. 6 characters"
+                    className="h-12 pl-11 pr-10 rounded-xl bg-slate-50/50 border-slate-200 hover:bg-slate-100/30 text-slate-900 focus-visible:ring-rose-900/15 focus-visible:border-rose-900 transition-all duration-200 placeholder:text-slate-400/60"
+                    minLength={6}
+                    required
+                  />
+                </div>
               </div>
-              <div>
-                <Label>New Password</Label>
-                <Input
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  type="password"
-                  className="mt-1 rounded-xl"
-                  required
-                />
+
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold text-slate-500 uppercase tracking-wider pl-0.5">Confirm New Password</Label>
+                <div className="relative group">
+                  <Lock className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 group-focus-within:text-rose-900 transition-colors duration-200" />
+                  <Input
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Confirm password"
+                    className="h-12 pl-11 pr-10 rounded-xl bg-slate-50/50 border-slate-200 hover:bg-slate-100/30 text-slate-900 focus-visible:ring-rose-900/15 focus-visible:border-rose-900 transition-all duration-200 placeholder:text-slate-400/60"
+                    minLength={6}
+                    required
+                  />
+                </div>
               </div>
-              <div>
-                <Label>Confirm New Password</Label>
-                <Input
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  type="password"
-                  className="mt-1 rounded-xl"
-                  required
-                />
-              </div>
+
               <Button
                 type="submit"
-                className="w-full gradient-primary text-white border-0 rounded-xl"
-                disabled={resetPasswordMutation.isPending}
+                className="w-full h-12 rounded-xl gradient-primary text-white border-0 font-bold shadow-md hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 cursor-pointer"
+                disabled={resettingPassword}
               >
-                {resetPasswordMutation.isPending && (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                {resettingPassword ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Resetting password…
+                  </>
+                ) : (
+                  "Change Password"
                 )}
-                Change Password
               </Button>
             </form>
           )}

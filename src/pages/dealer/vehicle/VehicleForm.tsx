@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { ImageIcon, Video, Loader2, X, Upload, Camera, Plus } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -63,6 +63,12 @@ export default function VehicleForm({
 
   const [model, setModel] = useState("");
   const [variant, setVariant] = useState("");
+
+  // Validation errors for custom dropdowns
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const formRef = useRef<HTMLFormElement>(null);
+
+  const clearError = (key: string) => setErrors((prev) => { const n = { ...prev }; delete n[key]; return n; });
   const [askingPrice, setAskingPrice] = useState("");
 
   const models = brand ? getModels(brand) : [];
@@ -72,11 +78,16 @@ export default function VehicleForm({
     setBrand(val);
     setModel("");
     setVariant("");
+    clearError("brand");
+    clearError("model");
+    clearError("variant");
   };
 
   const handleModelChange = (val: string) => {
     setModel(val);
     setVariant("");
+    clearError("model");
+    clearError("variant");
   };
   const [registrationYear, setRegistrationYear] = useState(
     new Date().getFullYear().toString(),
@@ -158,6 +169,26 @@ export default function VehicleForm({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // Validate all required dropdown / custom select fields
+    const newErrors: Record<string, string> = {};
+    if (!brand) newErrors.brand = "Brand is required";
+    if (!model) newErrors.model = "Model is required";
+    if (!variant) newErrors.variant = "Variant is required";
+    if (!city) newErrors.city = "City is required";
+    if (!insuranceStatus) newErrors.insuranceStatus = "Insurance status is required";
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      // Scroll to the first error field
+      const firstKey = Object.keys(newErrors)[0];
+      const el = document.getElementById(`field-${firstKey}`);
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+      return;
+    }
+    setErrors({});
+
     const images = slotImages.filter((file): file is File => file !== null);
 
     if (!vehicleId) {
@@ -232,7 +263,7 @@ export default function VehicleForm({
       className="space-y-4 py-4 max-h-[70vh] overflow-y-auto px-1"
     >
       <div className="grid sm:grid-cols-2 gap-4">
-        <div className="text-left">
+        <div id="field-brand" className="text-left">
           <Label>
             Brand <span className="text-red-500">*</span>
           </Label>
@@ -242,11 +273,12 @@ export default function VehicleForm({
             options={CAR_BRANDS}
             placeholder="Select Brand"
             allowCustom={true}
-            triggerClassName="mt-1"
+            triggerClassName={`mt-1 ${errors.brand ? "border-red-500" : ""}`}
           />
+          {errors.brand && <p className="text-xs text-red-500 mt-1">{errors.brand}</p>}
         </div>
 
-        <div className="text-left">
+        <div id="field-model" className="text-left">
           <Label>
             Model <span className="text-red-500">*</span>
           </Label>
@@ -256,32 +288,34 @@ export default function VehicleForm({
             options={models}
             placeholder="Select or Type Model"
             allowCustom={true}
-            triggerClassName="mt-1"
+            triggerClassName={`mt-1 ${errors.model ? "border-red-500" : ""}`}
             disabled={!brand}
           />
+          {errors.model && <p className="text-xs text-red-500 mt-1">{errors.model}</p>}
         </div>
 
-        <div className="text-left">
+        <div id="field-variant" className="text-left">
           <Label>
             Variant <span className="text-red-500">*</span>
           </Label>
           <SearchableSelect
             value={variant}
-            onValueChange={setVariant}
+            onValueChange={(val) => { setVariant(val); clearError("variant"); }}
             options={variants}
             placeholder="Select or Type Variant"
             allowCustom={true}
-            triggerClassName="mt-1"
+            triggerClassName={`mt-1 ${errors.variant ? "border-red-500" : ""}`}
             disabled={!model}
           />
+          {errors.variant && <p className="text-xs text-red-500 mt-1">{errors.variant}</p>}
         </div>
 
-        <div className="text-left">
+        <div id="field-city" className="text-left">
           <Label>
             City <span className="text-red-500">*</span>
           </Label>
-          <Select value={city} onValueChange={setCity} required>
-            <SelectTrigger className="mt-1">
+          <Select value={city} onValueChange={(v) => { setCity(v); clearError("city"); }}>
+            <SelectTrigger className={`mt-1 ${errors.city ? "border-red-500" : ""}`}>
               <SelectValue placeholder="Select City" />
             </SelectTrigger>
             <SelectContent>
@@ -292,6 +326,7 @@ export default function VehicleForm({
               ))}
             </SelectContent>
           </Select>
+          {errors.city && <p className="text-xs text-red-500 mt-1">{errors.city}</p>}
         </div>
 
         <Field
@@ -394,12 +429,12 @@ export default function VehicleForm({
           </Select>
         </div>
 
-        <div className="text-left">
+        <div id="field-insuranceStatus" className="text-left">
           <Label>
             Insurance Status <span className="text-red-500">*</span>
           </Label>
-          <Select value={insuranceStatus} onValueChange={setInsuranceStatus} required>
-            <SelectTrigger className="mt-1">
+          <Select value={insuranceStatus} onValueChange={(v) => { setInsuranceStatus(v); clearError("insuranceStatus"); }}>
+            <SelectTrigger className={`mt-1 ${errors.insuranceStatus ? "border-red-500" : ""}`}>
               <SelectValue placeholder="Select Insurance Status" />
             </SelectTrigger>
             <SelectContent>
@@ -410,6 +445,7 @@ export default function VehicleForm({
               ))}
             </SelectContent>
           </Select>
+          {errors.insuranceStatus && <p className="text-xs text-red-500 mt-1">{errors.insuranceStatus}</p>}
         </div>
 
         <Field

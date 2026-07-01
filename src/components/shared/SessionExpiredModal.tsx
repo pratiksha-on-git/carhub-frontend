@@ -11,6 +11,7 @@ import {
 import { useAdminAuth } from "@/contexts/AdminAuthContext";
 import { useDealerAuth } from "@/contexts/DealerAuthContext";
 import { clearCustomer } from "@/hooks/public/useCustomerAuth";
+import { Clock } from "lucide-react";
 
 export function SessionExpiredModal() {
   const [open, setOpen] = useState(false);
@@ -83,21 +84,30 @@ export function SessionExpiredModal() {
 
   return (
     <AlertDialog open={open}>
-      <AlertDialogContent className="sm:max-w-md">
-        <AlertDialogHeader>
-          <AlertDialogTitle className="text-xl font-bold text-slate-900">
+      <AlertDialogContent className="sm:max-w-md rounded-3xl border border-slate-100 p-6 sm:p-8 bg-white shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+        <AlertDialogHeader className="flex flex-col items-center text-center">
+          
+          {/* Animated clock circle icon indicator */}
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-rose-50 text-rose-500 mb-4 border border-rose-100/50 shadow-inner">
+            <Clock className="h-6 w-6 animate-pulse" />
+          </div>
+
+          <AlertDialogTitle className="font-display text-2xl font-black text-slate-900 tracking-tight">
             Session Expired
           </AlertDialogTitle>
-          <AlertDialogDescription className="text-slate-600 mt-2">
+          
+          <AlertDialogDescription className="text-slate-500 text-sm leading-relaxed mt-2.5 max-w-xs">
             {getModalDescription()}
           </AlertDialogDescription>
         </AlertDialogHeader>
-        <AlertDialogFooter className="mt-6">
+
+        <AlertDialogFooter className="mt-8 flex justify-center sm:justify-center w-full">
           <AlertDialogAction
             onClick={handleConfirm}
-            className="w-full sm:w-auto gradient-primary text-white border-0"
+            className="w-full h-11 font-bold text-white rounded-xl hover:opacity-90 transition-all duration-200 cursor-pointer shadow-lg shadow-rose-500/10 uppercase text-xs tracking-wider border-0"
+            style={{ background: "linear-gradient(135deg, #e11d48 0%, #0f172a 100%)" }}
           >
-            OK
+            Acknowledge
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

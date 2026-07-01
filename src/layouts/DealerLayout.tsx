@@ -6,6 +6,7 @@ import {
   User,
   CreditCard,
   Heart,
+  MessageSquare,
 } from "lucide-react";
 import DashboardLayout from "./DashboardLayout";
 
@@ -30,6 +31,11 @@ const nav = [
     to: "/dealer/profile",
     label: "Profile",
     icon: <User className="h-4 w-4" />,
+  },
+  {
+    to: "/dealer/chat",
+    label: "Chat",
+    icon: <MessageSquare className="h-4 w-4" />,
   },
   {
     to: "/dealer/subscription",

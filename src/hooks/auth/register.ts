@@ -9,7 +9,7 @@ type DealerRegistrationPayload = {
   yearsInBusiness: number;
   mobile: string;
   whatsapp: string;
-  email: string;
+  email?: string;
   password: string;
   address: string;
   city: string;
@@ -41,8 +41,8 @@ export function useRegister() {
   const registerDealer = React.useCallback(
     async (
       payload: DealerRegistrationPayload,
-      dealerLogo: File,
       showroomImage: File,
+      dealerLogo: File,
     ) => {
       setIsSubmitting(true);
       try {
@@ -51,8 +51,8 @@ export function useRegister() {
           "dealer",
           new Blob([JSON.stringify(payload)], { type: "application/json" }),
         );
-        formData.append("dealerLogo", dealerLogo);
         formData.append("showroomImage", showroomImage);
+        formData.append("dealerLogo", dealerLogo);
 
         const { data: body } = await apiClient.post(
           "/api/dealer/register",

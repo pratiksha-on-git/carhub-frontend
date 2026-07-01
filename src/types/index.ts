@@ -81,7 +81,7 @@ export interface SubscriptionPlan {
   features: string[];
 }
 
-export type AuthRole = "guest" | "dealer" | "admin";
+export type AuthRole = "guest" | "dealer" | "admin" | "customer";
 
 export interface AuthUser {
   id: string;

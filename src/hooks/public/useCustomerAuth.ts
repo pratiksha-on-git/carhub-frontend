@@ -94,6 +94,12 @@ export function useCustomerRegister() {
       } catch (err) {
         if (axios.isAxiosError(err)) {
           const body = err.response?.data;
+          if (body?.errors && typeof body.errors === "object") {
+            const errMsgs = Object.values(body.errors).filter(Boolean);
+            if (errMsgs.length > 0) {
+              throw new Error(errMsgs.join(", "));
+            }
+          }
           throw new Error(body?.message ?? "Registration failed");
         }
         throw err;
@@ -108,7 +114,7 @@ export function useCustomerRegister() {
 }
 
 // ── Login — hits API, decodes JWT, stores everything ─────────────────────────
-type LoginPayload = { email: string; password: string };
+type LoginPayload = { mobile: string; password: string };
 
 export function useCustomerLogin() {
   const [isLoggingIn, setIsLoggingIn] = React.useState(false);
@@ -168,7 +174,7 @@ export function useCustomerLogin() {
             (decoded.customerCity as string) ??
             (decoded.city as string) ??
             "",
-          email: payload.email,
+          email: (decoded.email as string) ?? "",
           token,
           decoded,
         };

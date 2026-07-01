@@ -29,14 +29,12 @@ export default function Wishlist() {
   };
 
   return (
-    <>
-      <SEO title="My Wishlist — CAPL" description="Your saved cars on CAPL." />
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex items-center gap-3 mb-8">
+    <div className="pb-20 pt-10 bg-gradient-to-b from-rose-50/30 via-white to-rose-50/30">
+      <SEO title="My Wishlist — Caryanam" description="Your saved cars on Caryanam." />
 
-          <h1 className="font-display text-3xl font-black tracking-tight">My Wishlist</h1>
-        </div>
 
+
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10">
         {loading && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {[1, 2, 3, 4].map((i) => (
@@ -57,23 +55,26 @@ export default function Wishlist() {
         )}
 
         {!loading && wishlisted.length === 0 && (
-          <div className="text-center py-24 bg-card rounded-3xl border border-border shadow-sm max-w-xl mx-auto">
-            <div className="h-16 w-16 bg-rose-50 dark:bg-rose-950/30 rounded-full flex items-center justify-center mx-auto mb-5">
-              <Heart className="h-8 w-8 text-rose-500" />
+          <motion.div
+            initial={{ opacity: 0, scale: 0.97 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.4 }}
+            className="text-center py-24 bg-card rounded-3xl border border-border shadow-sm max-w-xl mx-auto"
+          >
+            <div className="h-20 w-20 bg-rose-50 dark:bg-rose-950/30 rounded-full flex items-center justify-center mx-auto mb-5">
+              <Heart className="h-10 w-10 text-rose-400" />
             </div>
-            <h3 className="font-display font-bold text-xl">
-              Your wishlist is empty
-            </h3>
+            <h3 className="font-display font-bold text-xl">Your wishlist is empty</h3>
             <p className="text-sm text-muted-foreground mt-2 max-w-xs mx-auto">
               Explore our collection of certified pre-owned cars and save your favorites.
             </p>
-            <Button
-              asChild
-              className="mt-6 gradient-primary text-white border-0 px-6 py-5 rounded-xl shadow-md hover:shadow-lg transition-all"
+            <a
+              href="/cars"
+              className="mt-6 inline-flex items-center gap-2 gradient-primary text-white px-7 py-3 rounded-full font-bold shadow-lg shadow-rose-500/20 hover:opacity-90 transition-opacity"
             >
-              <Link to="/cars">Browse Cars</Link>
-            </Button>
-          </div>
+              Browse Cars <ArrowRight className="h-4 w-4" />
+            </a>
+          </motion.div>
         )}
 
         {!loading && wishlisted.length > 0 && (
@@ -144,6 +145,6 @@ export default function Wishlist() {
           </div>
         )}
       </div>
-    </>
+    </div>
   );
 }

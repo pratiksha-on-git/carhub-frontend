@@ -52,7 +52,7 @@ export default function DealerDashboard() {
   } = useVehicleLeads(dealerId);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 ">
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold tracking-tight text-slate-900">
@@ -80,22 +80,26 @@ export default function DealerDashboard() {
             <Stat
               icon={<CarFront />}
               label="Total Vehicles"
+              purple
               value={dash?.totalVehicles ?? 0}
             />
             <Stat
               icon={<Star />}
               label="Featured"
+
               value={dash?.featuredVehicles ?? 0}
               accent
             />
             <Stat
               icon={<Inbox />}
               label="Total Leads"
+              blue
               value={dash?.totalLeads ?? 0}
             />
             <Stat
               icon={<Eye />}
               label="Vehicle Views"
+              green
               value={(dash?.vehicleViews ?? 0).toLocaleString("en-IN")}
             />
           </>
@@ -231,17 +235,23 @@ function Stat({
   label,
   value,
   accent,
+  purple,
+  blue,
+  green,
 }: {
   icon: React.ReactNode;
   label: string;
   value: React.ReactNode;
   accent?: boolean;
+  purple?: boolean;
+  blue?: boolean;
+  green?: boolean;
 }) {
   return (
-    <Card>
+    <Card >
       <CardContent className="p-5">
         <div
-          className={`w-10 h-10 grid place-items-center rounded-xl mb-3 ${accent ? "bg-amber-100 text-amber-600" : "gradient-primary text-white"}`}
+          className={`w-10 h-10 grid place-items-center rounded-xl mb-3 ${accent ? "bg-amber-100 text-amber-600" : purple ? "bg-purple-100 text-purple-600" : blue ? "bg-blue-100 text-blue-600" : green ? "bg-green-100 text-green-600" : "gradient-primary text-white"}`}
         >
           {icon}
         </div>

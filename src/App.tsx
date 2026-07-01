@@ -21,6 +21,7 @@ import Cars from "@/pages/public/Cars";
 import PremiumCars from "@/pages/public/PremiumCars";
 import CarDetails from "@/pages/public/CarDetails";
 import Wishlist from "@/pages/public/Wishlist";
+import CustomerChat from "@/pages/public/Chat";
 
 import About from "@/pages/public/About";
 import PrivacyPolicy from "@/pages/public/PrivacyPolicy";
@@ -35,6 +36,7 @@ import DealerVehicleDetails from "@/pages/dealer/vehicle/VehicleDetails";
 import DealerLeads from "@/pages/dealer/Leads";
 import DealerProfile from "@/pages/dealer/Profile";
 import DealerWishlist from "@/pages/dealer/CustomerWishlist";
+import DealerChat from "@/pages/dealer/Chat";
 
 import DealerSubscription from "@/pages/dealer/subscription/Subscription";
 
@@ -45,6 +47,8 @@ import AdminLeads from "@/pages/admin/Leads";
 import AdminSubscriptions from "@/pages/admin/Subscriptions";
 
 import AdminReports from "@/pages/admin/Reports";
+import AdminChat from "@/pages/admin/Chat";
+
 
 export default function App() {
   return (
@@ -62,6 +66,11 @@ export default function App() {
               <Route path="/about" element={<About />} />
               <Route path="/privacy-policy" element={<PrivacyPolicy />} />
               <Route path="/terms" element={<TermsAndConditions />} />
+              
+              {/* Customer Protected */}
+              <Route element={<ProtectedRoute allow={["customer"]} />}>
+                <Route path="/chat" element={<CustomerChat />} />
+              </Route>
             </Route>
 
             {/* Auth */}
@@ -84,6 +93,7 @@ export default function App() {
                 <Route path="leads" element={<DealerLeads />} />
                 <Route path="wishlist" element={<DealerWishlist />} />
                 <Route path="profile" element={<DealerProfile />} />
+                <Route path="chat" element={<DealerChat />} />
 
                 <Route path="subscription" element={<DealerSubscription />} />
               </Route>
@@ -101,6 +111,7 @@ export default function App() {
                 <Route path="vehicles" element={<AdminVehicles />} />
                 <Route path="leads" element={<AdminLeads />} />
                 <Route path="subscriptions" element={<AdminSubscriptions />} />
+                <Route path="chat" element={<AdminChat />} />
 
                 <Route path="reports" element={<AdminReports />} />
               </Route>
@@ -112,7 +123,7 @@ export default function App() {
             </Route>
           </Routes>
         </BrowserRouter>
-        <Toaster position="top-right" richColors />
+        <Toaster position="bottom-right" richColors />
         <SessionExpiredModal />
       </DealerAuthProvider>
     </AdminAuthProvider>

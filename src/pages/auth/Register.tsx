@@ -25,6 +25,9 @@ import {
   Map,
   LocateFixed,
   X,
+  Shield,
+  LineChart,
+  Zap,
 } from "lucide-react";
 
 import { Input } from "@/components/ui/input";
@@ -34,7 +37,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { SEO } from "@/components/shared/SEO";
 import { useRegister, ApiError } from "@/hooks/auth/register";
 import { toast } from "sonner";
-import heroVideo from "@/assets/hero1.mp4";
+import carImg from "@/assets/download.jpg";
 
 type FormData = {
   businessName: string;
@@ -55,8 +58,8 @@ export default function Register() {
   const navigate = useNavigate();
 
   const [step, setStep] = useState(0);
-  const [dealerLogo, setDealerLogo] = useState<File | null>(null);
   const [showroomImage, setShowroomImage] = useState<File | null>(null);
+  const [dealerLogo, setDealerLogo] = useState<File | null>(null);
   const formRef = React.useRef<HTMLFormElement>(null);
   const { isSubmitting, registerDealer } = useRegister();
   const [showPassword, setShowPassword] = useState(false);
@@ -77,18 +80,14 @@ export default function Register() {
     },
   });
 
-  const {
-    formState: { errors },
-  } = form;
-
   const onSubmit = async (data: FormData) => {
     try {
-      if (!dealerLogo) {
-        toast.error("Please upload a dealer logo.");
-        return;
-      }
       if (!showroomImage) {
         toast.error("Please upload a showroom image.");
+        return;
+      }
+      if (!dealerLogo) {
+        toast.error("Please upload a dealer logo.");
         return;
       }
 
@@ -98,7 +97,6 @@ export default function Register() {
         yearsInBusiness: Number(data.yearsInBusiness),
         mobile: data.mobile,
         whatsapp: data.whatsapp,
-        email: data.email,
         password: data.password,
         address: data.address,
         city: data.city,
@@ -106,13 +104,17 @@ export default function Register() {
         pinCode: data.pinCode,
       };
 
+      if (data.email && data.email.trim() !== "") {
+        payload.email = data.email;
+      }
+
       if (data.gstNumber && data.gstNumber.trim() !== "") {
         payload.gstNumber = data.gstNumber;
       }
 
-      const res = await registerDealer(payload, dealerLogo, showroomImage);
+      const res = await registerDealer(payload, showroomImage, dealerLogo);
 
-      toast.success(res?.message || "Dealer Registration Successfully");
+      toast.success(res?.message || "Dealer Registered Successfully");
 
       navigate("/auth/login");
     } catch (error) {
@@ -141,627 +143,543 @@ export default function Register() {
 
   const steps = [
     {
-      label: "Business",
+      label: "Business Identity",
       icon: Building2,
-      description: "Provide your company details",
+      description: "Enter your company details",
     },
     {
-      label: "Contact",
+      label: "Contact Info",
       icon: Phone,
       description: "How buyers can reach you",
     },
     {
-      label: "Location",
+      label: "Location Details",
       icon: MapPin,
       description: "Where your showroom operates",
     },
     {
-      label: "Media",
+      label: "Brand Visuals",
       icon: ImageIcon,
-      description: "Showcase logo & showroom visuals",
+      description: "Upload showroom logo & visuals",
     },
   ];
 
   return (
     <>
       <SEO
-        title="Dealer Registration - CAPL"
+        title="Dealer Registration - Caryanam"
         description="Register your dealership and start receiving quality leads."
       />
 
-      <div className="relative min-h-screen bg-blue-100/20 font-sans flex flex-col justify-center items-center p-4 sm:p-6 lg:p-8 overflow-x-hidden">
+      <div className="min-h-screen font-sans flex items-center justify-center p-4 sm:p-6 md:p-0 md:grid md:grid-cols-12 relative overflow-hidden text-slate-900 bg-slate-900">
+        {/* Background Car Image for Mobile Viewports */}
+        <div className="absolute inset-0 block md:hidden z-0">
+          <img
+            src={carImg}
+            alt="Caryanam Background Mobile"
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-black/60 z-0" />
+        </div>
+        {/* LEFT PANEL: Rose to Slate Brand Panel */}
+        <div className="md:col-span-6 hidden md:flex flex-col justify-between p-12 text-white relative overflow-hidden min-h-screen">
+          {/* Background Car Image */}
+          <img
+            src={carImg}
+            alt="Caryanam Background"
+            className="absolute inset-0 w-full h-full object-cover animate-fade-in"
+          />
+          {/* Dark gradient overlay over background image for maximum readability */}
+          <div className="absolute inset-0 bg-gradient-to-tr from-black/85 via-black/60 to-black/40 z-0" />
 
-
-        {/* Center Card-in-Card Container */}
-        <div className="w-full max-w-6xl bg-white rounded-3xl shadow-2xl border border-slate-200/80 overflow-hidden grid lg:grid-cols-2 relative z-10">
-
-          {/* LEFT COLUMN: Ambient Dark Media Sidebar (Hidden on mobile/tablet, shown on lg) */}
-          <div className="relative hidden lg:flex flex-col justify-between p-12 text-white overflow-hidden gradient-primary">
-            {/* Background Video */}
-            {/* <video
-              autoPlay
-              loop
-              muted
-              playsInline
-              className="absolute inset-0 w-full h-full object-cover opacity-25 z-0"
-            >
-              <source src={heroVideo} type="video/mp4" />
-            </video> */}
-
-            {/* Overlay Gradient & Glow */}
-            {/* <div className="absolute inset-0 bg-gradient-to-b from-slate-950/95 via-slate-900/85 to-slate-950/95 z-0" />
-            <div className="absolute top-1/4 left-1/4 w-[200px] h-[200px] bg-blue-600/10 rounded-full blur-[60px] pointer-events-none z-0" />
-            <div className="absolute bottom-1/4 right-1/4 w-[150px] h-[150px] bg-sky-500/10 rounded-full blur-[50px] pointer-events-none z-0" /> */}
-
-            <div className="relative z-10 flex flex-col justify-between h-full min-h-[480px]">
-              {/* Logo / Header */}
-              <Link to="/" className="flex items-center gap-3 group">
-                <div className="grid h-10 w-10 place-items-center rounded-xl bg-white/10 border border-white/10 backdrop-blur-md group-hover:bg-white/20 transition-all">
-                  <span className="font-display font-black text-white text-lg">C</span>
-                </div>
-                <div>
-                  <div className="font-display font-black text-lg tracking-wider text-white">CAPL</div>
-                  <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
-                    Dealer Network
-                  </div>
-                </div>
-              </Link>
-
-              {/* Central Copy and Bullet points */}
-              <div className="my-auto py-8">
-                <span className="inline-flex items-center rounded-full bg-blue-500/15 border border-blue-500/30 px-3.5 py-1 text-[10px] font-bold text-blue-400 tracking-widest uppercase mb-4">
-                  Partnership Program
-                </span>
-                <h2 className="text-3xl font-extrabold tracking-tight text-white leading-tight font-display">
-                  Grow your digital dealership.
-                </h2>
-                <p className="mt-3 text-slate-300 text-sm leading-relaxed max-w-sm">
-                  Join India's most trusted auto network, list your stock, and capture verified buyer leads directly.
-                </p>
-
-                {/* Features List */}
-                <ul className="mt-8 space-y-5">
-                  {[
-                    { title: "High-Intent Leads", desc: "Get direct phone & WhatsApp connections." },
-                    { title: "Smart Stock Tools", desc: "Manage your inventory via a sleek dashboard." },
-                    { title: "Showroom Branding", desc: "Display logo, details, and showroom visual." },
-                    { title: "Zero Commissions", desc: "Flat subscription model. Keep all your profits." },
-                  ].map((item) => (
-                    <li key={item.title} className="flex gap-3 items-start">
-                      <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-500/20 text-blue-400 border border-blue-500/30 mt-0.5 shadow-inner">
-                        <CheckCircle2 className="h-3 w-3" />
-                      </div>
-                      <div>
-                        <span className="block text-sm font-bold text-slate-100">{item.title}</span>
-                        <span className="block text-xs text-slate-400 mt-0.5">{item.desc}</span>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-
+          {/* Brand Logo & Header */}
+          <Link to="/" className="relative z-10 flex items-center gap-3">
+            <div className="w-9 h-9 rounded-full bg-rose-600/30 backdrop-blur-md flex items-center justify-center border border-white/20">
+              <div className="w-5 h-5 rounded-full bg-rose-600 flex items-center justify-center font-black text-white text-[10px]">C</div>
             </div>
+            <span className="font-display font-black text-lg tracking-tight text-white drop-shadow-md">Caryanam</span>
+          </Link>
+
+          {/* Slogan Text block */}
+          <div className="relative z-10 my-auto space-y-3.5 max-w-md">
+            <p className="text-base font-normal text-white/90">Hello!</p>
+            <h2 className="text-4xl sm:text-5xl font-black font-display tracking-tight leading-none text-white">
+              Welcome Back
+            </h2>
+            <h3 className="text-2xl sm:text-3xl font-black text-rose-500 leading-none">
+              Good to see you again
+            </h3>
+            <p className="text-xs text-white/70 leading-relaxed font-light mt-4">
+              Join Caryanam dealer network to manage stock, list vehicles, and verify buyer leads today. Create your business account to get started.
+            </p>
           </div>
 
-          {/* RIGHT COLUMN: Clean Light Workspace with form elements rendered directly */}
-          <div className="flex flex-col justify-between p-6 sm:p-10 lg:p-12 bg-slate-50 relative z-10 min-h-[580px]">
+          {/* Bottom features bar */}
+          <div className="relative z-10 grid grid-cols-3 gap-4 border-t border-white/10 pt-6 mt-8">
+            <div className="space-y-2">
+              <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center border border-white/10 mb-2 shadow-sm">
+                <Shield className="h-5 w-5 text-white" />
+              </div>
+              <h4 className="text-xs font-bold text-white tracking-wide">Secure Access</h4>
+              <p className="text-[10px] text-white/60 leading-relaxed font-light">Your data is protected with top-grade security</p>
+            </div>
+            <div className="space-y-2">
+              <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center border border-white/10 mb-2 shadow-sm">
+                <LineChart className="h-5 w-5 text-white" />
+              </div>
+              <h4 className="text-xs font-bold text-white tracking-wide">Manage Efficiently</h4>
+              <p className="text-[10px] text-white/60 leading-relaxed font-light">Streamline inventory and lead management</p>
+            </div>
+            <div className="space-y-2">
+              <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center border border-white/10 mb-2 shadow-sm">
+                <Zap className="h-5 w-5 text-white" />
+              </div>
+              <h4 className="text-xs font-bold text-white tracking-wide">Always Fast</h4>
+              <p className="text-[10px] text-white/60 leading-relaxed font-light">Quick and seamless experience every time</p>
+            </div>
+          </div>
+        </div>
 
-            <div className="relative z-10 w-full max-w-xl mx-auto flex-1 flex flex-col justify-center">
+        {/* RIGHT PANEL: Stepper Onboarding Workspace */}
+        <div className="w-full max-w-md bg-slate-950/40 backdrop-blur-md border border-white/10 rounded-[32px] p-8 sm:p-10 shadow-none relative overflow-hidden text-left z-10 md:h-full md:min-h-screen md:rounded-none md:max-w-none md:col-span-6 md:p-16 md:flex md:flex-col md:justify-between md:bg-white md:shadow-2xl md:border-0 md:backdrop-blur-none">
 
-              {/* Stepper Indicator */}
-              <div className="mb-8">
-                <div className="flex items-center justify-between">
-                  {steps.map((item, index) => {
-                    const Icon = item.icon;
-                    const active = step === index;
-                    const completed = step > index;
-                    return (
-                      <React.Fragment key={item.label}>
-                        <div className="flex flex-col items-center gap-1.5 text-center w-16 sm:w-auto relative group">
-                          <div
-                            className={`flex h-10 w-10 items-center justify-center rounded-xl border text-sm font-bold transition-all duration-300
-                              ${active
-                                ? "border-blue-600 bg-blue-600 text-white shadow-lg shadow-blue-500/20 scale-105"
-                                : completed
-                                  ? "border-emerald-500 bg-emerald-500 text-white shadow-sm"
-                                  : "border-slate-200 bg-slate-200/50 text-slate-400"
-                              }`}
-                          >
-                            {completed ? (
-                              <CheckCircle2 size={16} />
-                            ) : (
-                              <Icon size={15} />
-                            )}
-                          </div>
-                          <span
-                            className={`hidden sm:block text-[9px] font-bold uppercase tracking-widest ${active
-                              ? "text-blue-600"
-                              : completed
-                                ? "text-emerald-600"
-                                : "text-slate-400"
-                              }`}
-                          >
-                            {item.label}
-                          </span>
-                        </div>
-                        {index < steps.length - 1 && (
-                          <div className="flex-1 px-1">
-                            <div className="h-[2px] w-full bg-slate-200/50 rounded-full overflow-hidden">
-                              <div
-                                className={`h-full transition-all duration-500 ${step > index ? "bg-emerald-500 w-full" : "bg-slate-200/50 w-0"
-                                  }`}
-                              />
-                            </div>
-                          </div>
-                        )}
-                      </React.Fragment>
-                    );
-                  })}
+          {/* Concentric Circle and Semicircle top right details */}
+          <div className="absolute top-0 right-0 w-24 h-24 overflow-hidden pointer-events-none select-none">
+            <svg className="absolute -top-4 -right-4 w-20 h-20 text-rose-900/10" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="100" cy="0" r="80" stroke="currentColor" strokeWidth="1" strokeOpacity="0.15" />
+              <circle cx="100" cy="0" r="60" stroke="currentColor" strokeWidth="1" strokeOpacity="0.25" />
+              <circle cx="100" cy="0" r="40" fill="currentColor" fillOpacity="0.1" />
+            </svg>
+          </div>
+
+          <div className="relative z-10 w-full flex-1 flex flex-col justify-center">
+
+            {/* Header Status */}
+            <div className="flex items-center justify-between mb-6 pb-3 border-b border-white/10 md:border-slate-100">
+              <div>
+                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-rose-500 md:text-rose-900">
+                  Dealer Onboarding
+                </span>
+                <h2 className="font-display text-2xl font-black text-white md:text-slate-900 tracking-tight mt-1">
+                  {steps[step].label}
+                </h2>
+              </div>
+              <div className="text-right">
+                <div className="text-[10px] font-bold text-slate-300 md:text-slate-400 uppercase tracking-widest">
+                  Step {step + 1} of {steps.length}
                 </div>
-
-                {/* Thin Segmented Progress Bar */}
-                <div className="mt-6 flex gap-1 h-1 bg-slate-200/50 rounded-full overflow-hidden">
+                <div className="flex gap-1 mt-1.5 justify-end">
                   {steps.map((_, i) => (
                     <div
                       key={i}
-                      className={`flex-1 h-full rounded-full transition-all duration-500 ${step >= i
-                        ? "bg-gradient-to-r from-blue-600 to-indigo-600"
-                        : "bg-slate-300/30"
+                      className={`h-1 rounded-full transition-all duration-300 ${step === i ? "w-6 bg-rose-500 md:bg-rose-900" : step > i ? "w-2 bg-emerald-500" : "w-2 bg-slate-200"
                         }`}
                     />
                   ))}
                 </div>
-                <div className="mt-2.5 flex items-center justify-between text-[11px] text-slate-400 font-semibold tracking-wide">
-                  <span>{steps[step].description}</span>
-                  <span>Step {step + 1} of {steps.length}</span>
-                </div>
               </div>
-
-              <form
-                ref={formRef}
-                onSubmit={(e) => e.preventDefault()}
-                className="space-y-6"
-              >
-                <AnimatePresence mode="wait">
-                  <motion.div
-                    key={step}
-                    initial={{ opacity: 0, x: 10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -10 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    {step === 0 && (
-                      <div className="space-y-5">
-                        <div className="border-l-4 border-blue-600 pl-3.5 py-0.5">
-                          <h2 className="text-lg font-extrabold text-slate-900 tracking-tight">
-                            Business Identity
-                          </h2>
-                          <p className="text-xs text-slate-500 mt-0.5">
-                            Enter your company particulars to list on the marketplace.
-                          </p>
-                        </div>
-
-                        <div className="grid gap-4 sm:grid-cols-2">
-                          <div className="space-y-1.5">
-                            <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                              Business Name <span className="text-red-500">*</span>
-                            </Label>
-                            <div className="relative group">
-                              <Building2 className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors" />
-                              <Input
-                                required
-                                placeholder="e.g. Mumbai Premium Motors"
-                                className="h-11 pl-11 rounded-xl border border-slate-200 bg-white text-slate-900 placeholder-slate-400 focus-visible:bg-white focus-visible:border-blue-600 focus-visible:ring-1 focus-visible:ring-blue-600/35 transition-all shadow-sm"
-                                {...form.register("businessName")}
-                              />
-                            </div>
-                          </div>
-
-                          <div className="space-y-1.5">
-                            <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                              Owner Name <span className="text-red-500">*</span>
-                            </Label>
-                            <div className="relative group">
-                              <User className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors" />
-                              <Input
-                                required
-                                placeholder="Full name"
-                                className="h-11 pl-11 rounded-xl border border-slate-200 bg-white text-slate-900 placeholder-slate-400 focus-visible:bg-white focus-visible:border-blue-600 focus-visible:ring-1 focus-visible:ring-blue-600/35 transition-all shadow-sm"
-                                {...form.register("ownerName")}
-                              />
-                            </div>
-                          </div>
-
-                          <div className="space-y-1.5">
-                            <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                              GST Number <span className="text-slate-400 font-normal">(optional)</span>
-                            </Label>
-                            <div className="relative group">
-                              <ReceiptText className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors" />
-                              <Input
-                                placeholder="22AAAAA0000A1Z5"
-                                className="h-11 pl-11 rounded-xl uppercase border border-slate-200 bg-white text-slate-900 placeholder-slate-400 focus-visible:bg-white focus-visible:border-blue-600 focus-visible:ring-1 focus-visible:ring-blue-600/35 transition-all shadow-sm"
-                                {...form.register("gstNumber")}
-                              />
-                            </div>
-                          </div>
-
-                          <div className="space-y-1.5">
-                            <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                              Years in Business <span className="text-red-500">*</span>
-                            </Label>
-                            <div className="relative group">
-                              <BriefcaseBusiness className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors" />
-                              <Input
-                                type="number"
-                                required
-                                min={0}
-                                placeholder="5"
-                                className="h-11 pl-11 rounded-xl border border-slate-200 bg-white text-slate-900 placeholder-slate-400 focus-visible:bg-white focus-visible:border-blue-600 focus-visible:ring-1 focus-visible:ring-blue-600/35 transition-all shadow-sm"
-                                {...form.register("yearsInBusiness")}
-                              />
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                    {step === 1 && (
-                      <div className="space-y-5">
-                        <div className="border-l-4 border-blue-600 pl-3.5 py-0.5">
-                          <h2 className="text-lg font-extrabold text-slate-900 tracking-tight">
-                            Contact & Credentials
-                          </h2>
-                          <p className="text-xs text-slate-500 mt-0.5">
-                            Configure reachability details and sign-in credentials.
-                          </p>
-                        </div>
-
-                        <div className="grid gap-4 sm:grid-cols-2">
-                          <div className="space-y-1.5">
-                            <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                              Mobile Number <span className="text-red-500">*</span>
-                            </Label>
-                            <div className="relative group">
-                              <Phone className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors" />
-                              <Input
-                                required
-                                maxLength={10}
-                                placeholder="9876543210"
-                                className="h-11 pl-11 rounded-xl border border-slate-200 bg-white text-slate-900 placeholder-slate-400 focus-visible:bg-white focus-visible:border-blue-600 focus-visible:ring-1 focus-visible:ring-blue-600/35 transition-all shadow-sm"
-                                {...form.register("mobile")}
-                              />
-                            </div>
-                          </div>
-
-                          <div className="space-y-1.5">
-                            <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                              WhatsApp Number <span className="text-red-500">*</span>
-                            </Label>
-                            <div className="relative group">
-                              <MessageCircle className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors" />
-                              <Input
-                                required
-                                maxLength={10}
-                                placeholder="9876543210"
-                                className="h-11 pl-11 rounded-xl border border-slate-200 bg-white text-slate-900 placeholder-slate-400 focus-visible:bg-white focus-visible:border-blue-600 focus-visible:ring-1 focus-visible:ring-blue-600/35 transition-all shadow-sm"
-                                {...form.register("whatsapp")}
-                              />
-                            </div>
-                          </div>
-
-                          <div className="space-y-1.5">
-                            <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                              Email Address <span className="text-red-500">*</span>
-                            </Label>
-                            <div className="relative group">
-                              <Mail className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors" />
-                              <Input
-                                type="email"
-                                required
-                                placeholder="you@example.com"
-                                className="h-11 pl-11 rounded-xl border border-slate-200 bg-white text-slate-900 placeholder-slate-400 focus-visible:bg-white focus-visible:border-blue-600 focus-visible:ring-1 focus-visible:ring-blue-600/35 transition-all shadow-sm"
-                                {...form.register("email")}
-                              />
-                            </div>
-                          </div>
-
-                          <div className="space-y-1.5">
-                            <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                              Password <span className="text-red-500">*</span>
-                            </Label>
-                            <div className="relative group">
-                              <Lock className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors" />
-                              <Input
-                                type={showPassword ? "text" : "password"}
-                                required
-                                minLength={6}
-                                placeholder="Min. 6 characters"
-                                className="h-11 pl-11 pr-11 rounded-xl border border-slate-200 bg-white text-slate-900 placeholder-slate-400 focus-visible:bg-white focus-visible:border-blue-600 focus-visible:ring-1 focus-visible:ring-blue-600/35 transition-all shadow-sm"
-                                {...form.register("password")}
-                              />
-                              <button
-                                type="button"
-                                onClick={() => setShowPassword(!showPassword)}
-                                className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-blue-600 transition-colors cursor-pointer"
-                              >
-                                {showPassword ? (
-                                  <EyeOff className="h-4 w-4" />
-                                ) : (
-                                  <Eye className="h-4 w-4" />
-                                )}
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                    {step === 2 && (
-                      <div className="space-y-5">
-                        <div className="border-l-4 border-blue-600 pl-3.5 py-0.5">
-                          <h2 className="text-lg font-extrabold text-slate-900 tracking-tight">
-                            Showroom Location
-                          </h2>
-                          <p className="text-xs text-slate-500 mt-0.5">
-                            Accurate showroom address helps nearby buyers discover you.
-                          </p>
-                        </div>
-
-                        <div className="space-y-4">
-                          <div className="space-y-1.5">
-                            <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                              Full Address <span className="text-red-500">*</span>
-                            </Label>
-                            <div className="relative group">
-                              <MapPinned className="absolute left-4 top-3.5 h-4 w-4 text-slate-400 group-focus-within:text-blue-600 transition-colors" />
-                              <Textarea
-                                rows={3}
-                                required
-                                placeholder="Enter complete showroom building/area details"
-                                className="pl-11 pr-4 py-3 rounded-xl resize-none border border-slate-200 bg-white text-slate-900 placeholder-slate-400 focus-visible:bg-white focus-visible:border-blue-600 focus-visible:ring-1 focus-visible:ring-blue-600/35 transition-all shadow-sm"
-                                {...form.register("address")}
-                              />
-                            </div>
-                          </div>
-
-                          <div className="grid gap-4 sm:grid-cols-2">
-                            <div className="space-y-1.5">
-                              <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                                City <span className="text-red-500">*</span>
-                              </Label>
-                              <div className="relative group">
-                                <Building className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors" />
-                                <Input
-                                  required
-                                  placeholder="e.g. Mumbai"
-                                  className="h-11 pl-11 rounded-xl border border-slate-200 bg-white text-slate-900 placeholder-slate-400 focus-visible:bg-white focus-visible:border-blue-600 focus-visible:ring-1 focus-visible:ring-blue-600/35 transition-all shadow-sm"
-                                  {...form.register("city")}
-                                />
-                              </div>
-                            </div>
-
-                            <div className="space-y-1.5">
-                              <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                                State <span className="text-red-500">*</span>
-                              </Label>
-                              <div className="relative group">
-                                <Map className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors" />
-                                <Input
-                                  required
-                                  placeholder="e.g. Maharashtra"
-                                  className="h-11 pl-11 rounded-xl border border-slate-200 bg-white text-slate-900 placeholder-slate-400 focus-visible:bg-white focus-visible:border-blue-600 focus-visible:ring-1 focus-visible:ring-blue-600/35 transition-all shadow-sm"
-                                  {...form.register("state")}
-                                />
-                              </div>
-                            </div>
-                          </div>
-
-                          <div className="sm:max-w-[50%] space-y-1.5">
-                            <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                              Pin Code <span className="text-red-500">*</span>
-                            </Label>
-                            <div className="relative group">
-                              <LocateFixed className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors" />
-                              <Input
-                                required
-                                maxLength={6}
-                                placeholder="400001"
-                                className="h-11 pl-11 rounded-xl border border-slate-200 bg-white text-slate-900 placeholder-slate-400 focus-visible:bg-white focus-visible:border-blue-600 focus-visible:ring-1 focus-visible:ring-blue-600/35 transition-all shadow-sm"
-                                {...form.register("pinCode")}
-                              />
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                    {step === 3 && (
-                      <div className="space-y-5">
-                        <div className="border-l-4 border-blue-600 pl-3.5 py-0.5">
-                          <h2 className="text-lg font-extrabold text-slate-900 tracking-tight">
-                            Brand Visuals
-                          </h2>
-                          <p className="text-xs text-slate-500 mt-0.5">
-                            Upload quality files. Visible branding builds 4x buyer engagement.
-                          </p>
-                        </div>
-
-                        <div className="grid gap-4 sm:grid-cols-2">
-                          {/* Logo Upload */}
-                          <div className="space-y-1.5">
-                            <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                              Dealer Logo <span className="text-red-500">*</span>
-                            </Label>
-
-                            {!dealerLogo ? (
-                              <label
-                                htmlFor="dealer-logo-input"
-                                className="group relative flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 bg-white py-7 px-4 text-center transition-all duration-200 hover:border-blue-500 hover:bg-blue-50/10 shadow-sm"
-                              >
-                                <div className="mb-2.5 flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 text-slate-400 group-hover:bg-blue-600 group-hover:text-white transition-all duration-200 shadow-sm">
-                                  <Upload className="h-4.5 w-4.5" />
-                                </div>
-                                <span className="text-xs font-bold text-slate-700 group-hover:text-blue-600 transition-colors">
-                                  Click to upload logo
-                                </span>
-                                <span className="mt-1 text-[10px] text-slate-400 font-medium">
-                                  PNG, JPG · Square
-                                </span>
-                                <input
-                                  id="dealer-logo-input"
-                                  type="file"
-                                  accept=".png,.jpg,.jpeg"
-                                  className="sr-only"
-                                  onChange={(e) =>
-                                    setDealerLogo(e.target.files?.[0] ?? null)
-                                  }
-                                />
-                              </label>
-                            ) : (
-                              <div className="relative flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm h-[126px]">
-                                <div className="h-14 w-14 shrink-0 overflow-hidden rounded-xl border border-slate-200 bg-white">
-                                  <img
-                                    src={URL.createObjectURL(dealerLogo)}
-                                    alt="Logo preview"
-                                    className="h-full w-full object-cover"
-                                  />
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                  <p className="text-xs font-bold text-slate-800 truncate">{dealerLogo.name}</p>
-                                  <p className="text-[10px] text-slate-400 font-semibold mt-0.5">
-                                    {(dealerLogo.size / 1024).toFixed(0)} KB
-                                  </p>
-                                  <span className="inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded mt-1.5">
-                                    Selected
-                                  </span>
-                                </div>
-                                <button
-                                  type="button"
-                                  onClick={() => setDealerLogo(null)}
-                                  className="p-1.5 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors cursor-pointer self-start animate-fade-in"
-                                >
-                                  <X className="h-4 w-4" />
-                                </button>
-                              </div>
-                            )}
-                          </div>
-
-                          {/* Showroom Image Upload */}
-                          <div className="space-y-1.5">
-                            <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                              Showroom Image <span className="text-red-500">*</span>
-                            </Label>
-
-                            {!showroomImage ? (
-                              <label
-                                htmlFor="showroom-image-input"
-                                className="group relative flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 bg-white py-7 px-4 text-center transition-all duration-200 hover:border-blue-500 hover:bg-blue-50/10 shadow-sm"
-                              >
-                                <div className="mb-2.5 flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 text-slate-400 group-hover:bg-blue-600 group-hover:text-white transition-all duration-200 shadow-sm">
-                                  <Upload className="h-4.5 w-4.5" />
-                                </div>
-                                <span className="text-xs font-bold text-slate-700 group-hover:text-blue-600 transition-colors">
-                                  Click to upload showroom
-                                </span>
-                                <span className="mt-1 text-[10px] text-slate-400 font-medium">
-                                  PNG, JPG · Landscape
-                                </span>
-                                <input
-                                  id="showroom-image-input"
-                                  type="file"
-                                  accept=".png,.jpg,.jpeg"
-                                  className="sr-only"
-                                  onChange={(e) =>
-                                    setShowroomImage(e.target.files?.[0] ?? null)
-                                  }
-                                />
-                              </label>
-                            ) : (
-                              <div className="relative flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm h-[126px]">
-                                <div className="h-14 w-20 shrink-0 overflow-hidden rounded-xl border border-slate-200 bg-white">
-                                  <img
-                                    src={URL.createObjectURL(showroomImage)}
-                                    alt="Showroom preview"
-                                    className="h-full w-full object-cover"
-                                  />
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                  <p className="text-xs font-bold text-slate-800 truncate">{showroomImage.name}</p>
-                                  <p className="text-[10px] text-slate-400 font-semibold mt-0.5">
-                                    {(showroomImage.size / 1024).toFixed(0)} KB
-                                  </p>
-                                  <span className="inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded mt-1.5">
-                                    Selected
-                                  </span>
-                                </div>
-                                <button
-                                  type="button"
-                                  onClick={() => setShowroomImage(null)}
-                                  className="p-1.5 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors cursor-pointer self-start animate-fade-in"
-                                >
-                                  <X className="h-4 w-4" />
-                                </button>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </motion.div>
-                </AnimatePresence>
-
-                {/* Navigation Footer */}
-                <div className="flex items-center justify-between gap-3 border-t border-slate-100 pt-6 mt-4">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    disabled={step === 0}
-                    onClick={() => setStep(step - 1)}
-                    className="h-11 px-5 font-bold border border-slate-200 bg-white hover:bg-slate-50 hover:text-slate-900 text-slate-700 rounded-xl transition-all duration-200 disabled:opacity-40 cursor-pointer shadow-sm"
-                  >
-                    <ChevronLeft className="h-4 w-4 mr-1" /> Back
-                  </Button>
-
-                  {step < 3 ? (
-                    <Button
-                      type="button"
-                      onClick={() => {
-                        if (formRef.current?.reportValidity())
-                          setStep(step + 1);
-                      }}
-                      disabled={isSubmitting}
-                      className="h-11 px-5 font-bold gradient-primary text-white rounded-xl shadow-lg shadow-blue-500/20 hover:shadow-xl hover:shadow-blue-500/35 hover:opacity-95 transition-all duration-200 cursor-pointer"
-                    >
-                      Continue <ChevronRight className="h-4 w-4 ml-1" />
-                    </Button>
-                  ) : (
-                    <Button
-                      type="button"
-                      disabled={isSubmitting}
-                      onClick={form.handleSubmit(onSubmit)}
-                      className="h-11 px-7 font-bold gradient-primary text-white rounded-xl shadow-lg shadow-blue-500/20 hover:shadow-xl hover:shadow-blue-500/35 hover:opacity-95 transition-all duration-200 min-w-[130px] cursor-pointer"
-                    >
-                      {isSubmitting ? "Registering…" : "Register Now"}
-                    </Button>
-                  )}
-                </div>
-
-                <p className="text-center text-sm text-slate-500 font-medium pt-2">
-                  Already registered?{" "}
-                  <Link
-                    to="/auth/login"
-                    className="font-bold text-blue-600 hover:text-blue-700 hover:underline transition-colors"
-                  >
-                    Sign in
-                  </Link>
-                </p>
-              </form>
             </div>
 
+            {/* Sub-description */}
+            <div className="mb-6 text-xs text-slate-200 md:text-slate-400 font-semibold tracking-wide">
+              {steps[step].description}
+            </div>
 
+            <form
+              ref={formRef}
+              onSubmit={(e) => e.preventDefault()}
+              className="space-y-5"
+            >
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={step}
+                  initial={{ opacity: 0, x: 10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -10 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  {step === 0 && (
+                    <div className="space-y-4">
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        <div className="space-y-1.5">
+                          <Label className="text-xs font-semibold text-slate-200 md:text-slate-500">
+                            Business Name <span className="text-red-500">*</span>
+                          </Label>
+                          <Input
+                            required
+                            placeholder="e.g. Mumbai Premium Motors"
+                            className="h-11 px-4 rounded-xl border border-white/20 bg-white/10 text-white placeholder-white/40 focus-visible:bg-black/40 focus-visible:border-white focus-visible:ring-4 focus-visible:ring-white/10 md:border-slate-200 md:bg-slate-50/50 md:text-slate-900 md:placeholder-slate-400 md:focus-visible:bg-white md:focus-visible:border-rose-900 md:focus-visible:ring-rose-900/10 transition-all shadow-sm"
+                            {...form.register("businessName")}
+                          />
+                        </div>
+
+                        <div className="space-y-1.5">
+                          <Label className="text-xs font-semibold text-slate-200 md:text-slate-500">
+                            Owner Name <span className="text-red-500">*</span>
+                          </Label>
+                          <Input
+                            required
+                            placeholder="Owner's full name"
+                            className="h-11 px-4 rounded-xl border border-white/20 bg-white/10 text-white placeholder-white/40 focus-visible:bg-black/40 focus-visible:border-white focus-visible:ring-4 focus-visible:ring-white/10 md:border-slate-200 md:bg-slate-50/50 md:text-slate-900 md:placeholder-slate-400 md:focus-visible:bg-white md:focus-visible:border-rose-900 md:focus-visible:ring-rose-900/10 transition-all shadow-sm"
+                            {...form.register("ownerName")}
+                          />
+                        </div>
+
+                        <div className="space-y-1.5">
+                          <Label className="text-xs font-semibold text-slate-200 md:text-slate-500">
+                            GST Number <span className="text-slate-400 font-normal">(optional)</span>
+                          </Label>
+                          <Input
+                            placeholder="22AAAAA0000A1Z5"
+                            className="h-11 px-4 rounded-xl border border-white/20 bg-white/10 text-white placeholder-white/40 focus-visible:bg-black/40 focus-visible:border-white focus-visible:ring-4 focus-visible:ring-white/10 md:border-slate-200 md:bg-slate-50/50 md:text-slate-900 md:placeholder-slate-400 md:focus-visible:bg-white md:focus-visible:border-rose-900 md:focus-visible:ring-rose-900/10 transition-all shadow-sm uppercase"
+                            {...form.register("gstNumber")}
+                          />
+                        </div>
+
+                        <div className="space-y-1.5">
+                          <Label className="text-xs font-semibold text-slate-200 md:text-slate-500">
+                            Years in Business <span className="text-red-500">*</span>
+                          </Label>
+                          <Input
+                            type="number"
+                            required
+                            min={0}
+                            placeholder="5"
+                            className="h-11 px-4 rounded-xl border border-white/20 bg-white/10 text-white placeholder-white/40 focus-visible:bg-black/40 focus-visible:border-white focus-visible:ring-4 focus-visible:ring-white/10 md:border-slate-200 md:bg-slate-50/50 md:text-slate-900 md:placeholder-slate-400 md:focus-visible:bg-white md:focus-visible:border-rose-900 md:focus-visible:ring-rose-900/10 transition-all shadow-sm"
+                            {...form.register("yearsInBusiness")}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {step === 1 && (
+                    <div className="space-y-4">
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        <div className="space-y-1.5">
+                          <Label className="text-xs font-semibold text-slate-200 md:text-slate-500">
+                            Mobile Number <span className="text-red-500">*</span>
+                          </Label>
+                          <Input
+                            required
+                            type="tel"
+                            maxLength={10}
+                            pattern="[6-9][0-9]{9}"
+                            title="Mobile number must start with 6-9 and be exactly 10 digits"
+                            placeholder="9579******"
+                            onInput={(e: React.FormEvent<HTMLInputElement>) => {
+                              const target = e.currentTarget;
+                              const val = target.value.replace(/\D/g, "");
+                              if (val.length > 0) {
+                                const firstDigit = val[0];
+                                if (!["6", "7", "8", "9"].includes(firstDigit)) {
+                                  target.value = "";
+                                  return;
+                                }
+                              }
+                              target.value = val.slice(0, 10);
+                            }}
+                            className="h-11 px-4 rounded-xl border border-white/20 bg-white/10 text-white placeholder-white/40 focus-visible:bg-black/40 focus-visible:border-white focus-visible:ring-4 focus-visible:ring-white/10 md:border-slate-200 md:bg-slate-50/50 md:text-slate-900 md:placeholder-slate-400 md:focus-visible:bg-white md:focus-visible:border-rose-900 md:focus-visible:ring-rose-900/10 transition-all shadow-sm"
+                            {...form.register("mobile", {
+                              required: "Mobile number is required",
+                              pattern: {
+                                value: /^[6-9][0-9]{9}$/,
+                                message: "Mobile number must start with 6-9 and be exactly 10 digits"
+                              }
+                            })}
+                          />
+                        </div>
+
+                        <div className="space-y-1.5">
+                          <Label className="text-xs font-semibold text-slate-200 md:text-slate-500">
+                            WhatsApp Number <span className="text-red-500">*</span>
+                          </Label>
+                          <Input
+                            required
+                            type="tel"
+                            maxLength={10}
+                            pattern="[6-9][0-9]{9}"
+                            title="WhatsApp number must start with 6-9 and be exactly 10 digits"
+                            placeholder="9579******"
+                            onInput={(e: React.FormEvent<HTMLInputElement>) => {
+                              const target = e.currentTarget;
+                              const val = target.value.replace(/\D/g, "");
+                              if (val.length > 0) {
+                                const firstDigit = val[0];
+                                if (!["6", "7", "8", "9"].includes(firstDigit)) {
+                                  target.value = "";
+                                  return;
+                                }
+                              }
+                              target.value = val.slice(0, 10);
+                            }}
+                            className="h-11 px-4 rounded-xl border border-white/20 bg-white/10 text-white placeholder-white/40 focus-visible:bg-black/40 focus-visible:border-white focus-visible:ring-4 focus-visible:ring-white/10 md:border-slate-200 md:bg-slate-50/50 md:text-slate-900 md:placeholder-slate-400 md:focus-visible:bg-white md:focus-visible:border-rose-900 md:focus-visible:ring-rose-900/10 transition-all shadow-sm"
+                            {...form.register("whatsapp", {
+                              required: "WhatsApp number is required",
+                              pattern: {
+                                value: /^[6-9][0-9]{9}$/,
+                                message: "WhatsApp number must start with 6-9 and be exactly 10 digits"
+                              }
+                            })}
+                          />
+                        </div>
+
+                        <div className="space-y-1.5">
+                          <Label className="text-xs font-semibold text-slate-200 md:text-slate-500">
+                            Email Address <span className="text-slate-400 font-normal">(optional)</span>
+                          </Label>
+                          <Input
+                            type="email"
+                            placeholder="you@example.com"
+                            className="h-11 px-4 rounded-xl border border-white/20 bg-white/10 text-white placeholder-white/40 focus-visible:bg-black/40 focus-visible:border-white focus-visible:ring-4 focus-visible:ring-white/10 md:border-slate-200 md:bg-slate-50/50 md:text-slate-900 md:placeholder-slate-400 md:focus-visible:bg-white md:focus-visible:border-rose-900 md:focus-visible:ring-rose-900/10 transition-all shadow-sm"
+                            {...form.register("email")}
+                          />
+                        </div>
+
+                        <div className="space-y-1.5">
+                          <Label className="text-xs font-semibold text-slate-200 md:text-slate-500">
+                            Password <span className="text-red-500">*</span>
+                          </Label>
+                          <div className="relative">
+                            <Input
+                              type={showPassword ? "text" : "password"}
+                              required
+                              minLength={6}
+                              placeholder="Min. 6 characters"
+                              className="h-11 px-4 pr-10 rounded-xl border border-white/20 bg-white/10 text-white placeholder-white/40 focus-visible:bg-black/40 focus-visible:border-white focus-visible:ring-4 focus-visible:ring-white/10 md:border-slate-200 md:bg-slate-50/50 md:text-slate-900 md:placeholder-slate-400 md:focus-visible:bg-white md:focus-visible:border-rose-900 md:focus-visible:ring-rose-900/10 transition-all shadow-sm"
+                              {...form.register("password")}
+                            />
+                            <button
+                              type="button"
+                              onClick={() => setShowPassword(!showPassword)}
+                              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-white/50 hover:text-white md:text-rose-900/60 md:hover:text-rose-900 transition-colors cursor-pointer"
+                            >
+                              {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {step === 2 && (
+                    <div className="space-y-4">
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-semibold text-slate-200 md:text-slate-500">
+                          Full Address <span className="text-red-500">*</span>
+                        </Label>
+                        <Textarea
+                          rows={2}
+                          required
+                          placeholder="Enter complete showroom address"
+                          className="w-full px-4 py-3 rounded-xl border border-white/20 bg-white/10 text-white placeholder-white/40 focus-visible:bg-black/40 focus-visible:border-white focus-visible:ring-4 focus-visible:ring-white/10 md:border-slate-200 md:bg-slate-50/50 md:text-slate-900 md:placeholder-slate-400 md:focus-visible:bg-white md:focus-visible:border-rose-900 md:focus-visible:ring-rose-900/10 transition-all shadow-sm resize-none"
+                          {...form.register("address")}
+                        />
+                      </div>
+
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        <div className="space-y-1.5">
+                          <Label className="text-xs font-semibold text-slate-200 md:text-slate-500">
+                            City <span className="text-red-500">*</span>
+                          </Label>
+                          <Input
+                            required
+                            placeholder="e.g. Mumbai"
+                            className="h-11 px-4 rounded-xl border border-white/20 bg-white/10 text-white placeholder-white/40 focus-visible:bg-black/40 focus-visible:border-white focus-visible:ring-4 focus-visible:ring-white/10 md:border-slate-200 md:bg-slate-50/50 md:text-slate-900 md:placeholder-slate-400 md:focus-visible:bg-white md:focus-visible:border-rose-900 md:focus-visible:ring-rose-900/10 transition-all shadow-sm"
+                            {...form.register("city")}
+                          />
+                        </div>
+
+                        <div className="space-y-1.5">
+                          <Label className="text-xs font-semibold text-slate-200 md:text-slate-500">
+                            State <span className="text-red-500">*</span>
+                          </Label>
+                          <Input
+                            required
+                            placeholder="e.g. Maharashtra"
+                            className="h-11 px-4 rounded-xl border border-white/20 bg-white/10 text-white placeholder-white/40 focus-visible:bg-black/40 focus-visible:border-white focus-visible:ring-4 focus-visible:ring-white/10 md:border-slate-200 md:bg-slate-50/50 md:text-slate-900 md:placeholder-slate-400 md:focus-visible:bg-white md:focus-visible:border-rose-900 md:focus-visible:ring-rose-900/10 transition-all shadow-sm"
+                            {...form.register("state")}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="sm:max-w-[50%] space-y-1.5">
+                        <Label className="text-xs font-semibold text-slate-200 md:text-slate-500">
+                          Pin Code <span className="text-red-500">*</span>
+                        </Label>
+                        <Input
+                          required
+                          maxLength={6}
+                          placeholder="400001"
+                          className="h-11 px-4 rounded-xl border border-white/20 bg-white/10 text-white placeholder-white/40 focus-visible:bg-black/40 focus-visible:border-white focus-visible:ring-4 focus-visible:ring-white/10 md:border-slate-200 md:bg-slate-50/50 md:text-slate-900 md:placeholder-slate-400 md:focus-visible:bg-white md:focus-visible:border-rose-900 md:focus-visible:ring-rose-900/10 transition-all shadow-sm"
+                          {...form.register("pinCode")}
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {step === 3 && (
+                    <div className="space-y-4">
+                      <div className="max-w-md mx-auto space-y-4">
+                        {/* Dealer Logo Upload */}
+                        <div className="space-y-1.5">
+                          <Label className="text-xs font-semibold text-slate-200 md:text-slate-500">
+                            Dealer Logo <span className="text-red-500">*</span>
+                          </Label>
+
+                          {!dealerLogo ? (
+                            <label
+                              htmlFor="dealer-logo-input"
+                              className="group relative flex cursor-pointer flex-col items-center justify-center rounded-2xl border border-dashed border-white/20 bg-white/10 py-6 px-4 text-center transition-all duration-200 hover:border-white hover:bg-black/20 shadow-sm md:border-slate-200 md:bg-slate-50/50 md:hover:border-rose-500 md:hover:bg-rose-50/10"
+                            >
+                              <div className="mb-2 flex h-8 w-8 items-center justify-center rounded-xl bg-white/10 text-white/70 group-hover:bg-white group-hover:text-black transition-all duration-200 shadow-sm md:bg-slate-200 md:text-slate-400 md:group-hover:bg-rose-600 md:group-hover:text-white">
+                                <Upload size={14} />
+                              </div>
+                              <span className="text-xs font-bold text-white group-hover:text-white/80 transition-colors md:text-slate-700 md:group-hover:text-rose-500">
+                                Upload logo
+                              </span>
+                              <input
+                                id="dealer-logo-input"
+                                type="file"
+                                accept=".png,.jpg,.jpeg"
+                                className="sr-only"
+                                onChange={(e) =>
+                                  setDealerLogo(e.target.files?.[0] ?? null)
+                                }
+                              />
+                            </label>
+                          ) : (
+                            <div className="relative flex items-center gap-3 rounded-2xl border border-white/20 bg-white/10 p-3 shadow-sm h-[80px] md:border-slate-200 md:bg-rose-55/30">
+                              <div className="h-10 w-16 shrink-0 overflow-hidden rounded-xl border border-white/10 bg-slate-900 md:border-slate-200 md:bg-slate-50">
+                                <img
+                                  src={URL.createObjectURL(dealerLogo)}
+                                  alt="Logo preview"
+                                  className="h-full w-full object-cover"
+                                />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-xs font-bold text-white md:text-slate-800 truncate">{dealerLogo.name}</p>
+                                <span className="inline-flex items-center gap-1 text-[8px] font-bold uppercase tracking-wider text-emerald-400 bg-emerald-950/50 px-1.5 py-0.5 rounded mt-1 md:text-emerald-600 md:bg-emerald-50">
+                                  Selected
+                                </span>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => setDealerLogo(null)}
+                                className="p-1 rounded-lg text-white/50 hover:text-rose-450 hover:bg-white/10 transition-colors cursor-pointer self-start md:text-slate-400 md:hover:text-rose-500 md:hover:bg-rose-500/10"
+                              >
+                                <X size={14} />
+                              </button>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Showroom Image Upload */}
+                        <div className="space-y-1.5">
+                          <Label className="text-xs font-semibold text-slate-200 md:text-slate-500">
+                            Showroom Image <span className="text-red-500">*</span>
+                          </Label>
+
+                          {!showroomImage ? (
+                            <label
+                              htmlFor="showroom-image-input"
+                              className="group relative flex cursor-pointer flex-col items-center justify-center rounded-2xl border border-dashed border-white/20 bg-white/10 py-6 px-4 text-center transition-all duration-200 hover:border-white hover:bg-black/20 shadow-sm md:border-slate-200 md:bg-slate-50/50 md:hover:border-rose-500 md:hover:bg-rose-50/10"
+                            >
+                              <div className="mb-2 flex h-8 w-8 items-center justify-center rounded-xl bg-white/10 text-white/70 group-hover:bg-white group-hover:text-black transition-all duration-200 shadow-sm md:bg-slate-200 md:text-slate-400 md:group-hover:bg-rose-600 md:group-hover:text-white">
+                                <Upload size={14} />
+                              </div>
+                              <span className="text-xs font-bold text-white group-hover:text-white/80 transition-colors md:text-slate-700 md:group-hover:text-rose-500">
+                                Upload showroom
+                              </span>
+                              <input
+                                id="showroom-image-input"
+                                type="file"
+                                accept=".png,.jpg,.jpeg"
+                                className="sr-only"
+                                onChange={(e) =>
+                                  setShowroomImage(e.target.files?.[0] ?? null)
+                                }
+                              />
+                            </label>
+                          ) : (
+                            <div className="relative flex items-center gap-3 rounded-2xl border border-white/20 bg-white/10 p-3 shadow-sm h-[80px] md:border-slate-200 md:bg-rose-55/30">
+                              <div className="h-10 w-16 shrink-0 overflow-hidden rounded-xl border border-white/10 bg-slate-900 md:border-slate-200 md:bg-slate-50">
+                                <img
+                                  src={URL.createObjectURL(showroomImage)}
+                                  alt="Showroom preview"
+                                  className="h-full w-full object-cover"
+                                />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-xs font-bold text-white md:text-slate-800 truncate">{showroomImage.name}</p>
+                                <span className="inline-flex items-center gap-1 text-[8px] font-bold uppercase tracking-wider text-emerald-400 bg-emerald-950/50 px-1.5 py-0.5 rounded mt-1 md:text-emerald-600 md:bg-emerald-50">
+                                  Selected
+                                </span>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => setShowroomImage(null)}
+                                className="p-1 rounded-lg text-white/50 hover:text-rose-450 hover:bg-white/10 transition-colors cursor-pointer self-start md:text-slate-400 md:hover:text-rose-500 md:hover:bg-rose-500/10"
+                              >
+                                <X size={14} />
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </motion.div>
+              </AnimatePresence>
+
+              {/* Navigation Footer */}
+              <div className="flex items-center justify-between gap-3 border-t border-white/10 pt-5 mt-5 md:border-slate-200/60">
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={step === 0}
+                  onClick={() => setStep(step - 1)}
+                  className="h-10 px-5 font-bold border border-white/20 bg-white/10 text-white hover:bg-white/20 rounded-xl transition-all duration-200 disabled:opacity-40 cursor-pointer shadow-sm text-xs uppercase tracking-wider md:border-slate-200 md:bg-white md:text-slate-700 md:hover:bg-slate-50 md:hover:text-slate-900"
+                >
+                  <ChevronLeft size={14} className="mr-1" /> Back
+                </Button>
+
+                {step < 3 ? (
+                  <Button
+                    type="button"
+                    onClick={() => {
+                      if (formRef.current?.reportValidity())
+                        setStep(step + 1);
+                    }}
+                    disabled={isSubmitting}
+                    className="h-10 px-6 gradient-primary text-white rounded-xl font-bold transition-all duration-200 flex items-center gap-2 cursor-pointer shadow-lg shadow-rose-900/10 text-xs uppercase tracking-widest border-0"
+                  >
+                    Continue <ChevronRight size={14} />
+                  </Button>
+                ) : (
+                  <Button
+                    type="button"
+                    disabled={isSubmitting}
+                    onClick={form.handleSubmit(onSubmit)}
+                    className="h-10 px-8 bg-rose-900 hover:bg-rose-950 text-white rounded-xl font-bold transition-all duration-200 flex items-center gap-2 cursor-pointer shadow-lg shadow-rose-900/10 text-xs uppercase tracking-widest border-0"
+                  >
+                    {isSubmitting ? "Registering…" : "Register Now"} <ChevronRight size={14} />
+                  </Button>
+                )}
+              </div>
+
+              <p className="text-center text-sm text-white/50 font-semibold tracking-wide border-t border-white/10 pt-5 mt-5 md:text-slate-500 md:border-slate-200/60">
+                Already registered?{" "}
+                <Link
+                  to="/auth/login"
+                  className="font-bold text-rose-450 md:text-rose-900 hover:text-rose-200 md:hover:text-rose-950 hover:underline transition-colors"
+                >
+                  Sign in
+                </Link>
+              </p>
+            </form>
           </div>
+
         </div>
       </div>
     </>

@@ -47,92 +47,97 @@ export default function DashboardLayout({ title, nav, accentLabel }: Props) {
 
   const SidebarBody = () => (
     <div
-      className="flex h-full flex-col"
-      style={{
-        background: "linear-gradient(180deg, #0f172a 0%, #1e3a5f 100%)",
-      }}
+      className="flex h-full flex-col font-sans text-left bg-black"
+
     >
-      <div className="h-16 flex items-center gap-2 px-4 border-b border-white/10">
+      {/* Brand Header */}
+      <div className="h-16 flex items-center gap-2 px-6 border-b border-white/5">
         <div className="flex items-center gap-2">
-          <div className="grid h-9 w-9 place-items-center rounded-xl bg-white/15 text-white">
-            <Car className="h-5 w-5" />
-          </div>
-          <div className="font-display font-black text-base leading-none text-white">
-            CAPL <span className="text-sky-400">{accentLabel}</span>
+          {/* Logo Circle Badge */}
+
+          <div className="font-display font-black text-base text-white tracking-tight ml-1 flex items-center">
+            Caryanam
+
           </div>
         </div>
       </div>
-      <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
+
+      {/* Nav links */}
+      <nav className="flex-1 p-4 space-y-3 overflow-y-auto">
         {nav.map((n) => (
           <NavLink
             key={n.to}
             to={n.to}
             end
             className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
-                isActive
-                  ? "bg-blue-500 text-white shadow-sm border border-sky-400/40"
-                  : "text-white/60 hover:text-white hover:bg-white/10"
+              `flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all ${isActive
+                ? "bg-gradient-to-r from-rose-600 to-rose-700 text-white shadow-lg shadow-rose-500/15 border border-rose-400/20"
+                : "text-slate-400 hover:text-white hover:border-rose-400 hover:border hover:shadow-lg hover:bg-white/5"
               }`
             }
           >
-            {n.icon}
+            <span className="shrink-0">{n.icon}</span>
             <span>{n.label}</span>
           </NavLink>
         ))}
       </nav>
-      <div className="p-3 border-t border-white/10">
-        <div className="px-2 py-2 text-xs text-white/50">
+
+      {/* User Session Footer */}
+      <div className="p-4 border-t border-white/5 bg-black/20">
+        <div className="px-2 py-1 text-[10px] uppercase font-bold tracking-wider text-slate-500">
           Signed in as
           <br />
-          <span className="font-semibold text-white/80">{email}</span>
+          <span className="font-semibold text-slate-300 normal-case text-xs tracking-normal block mt-0.5 truncate">
+            {email}
+          </span>
         </div>
         <Button
           variant="ghost"
-          className="w-full justify-start gap-2 text-red-400 hover:text-red-300 hover:bg-white/10"
+          className="w-full justify-start gap-2 text-rose-400 hover:text-rose-300 hover:bg-white/5 rounded-xl mt-3 cursor-pointer h-10 font-bold text-xs uppercase tracking-wider"
           onClick={handleLogout}
         >
-          <LogOut className="h-4 w-4" /> Logout
+          <LogOut className="h-4 w-4 shrink-0" /> Logout
         </Button>
       </div>
     </div>
   );
 
   return (
-    <div className="min-h-screen bg-background flex">
-      <aside className="hidden lg:block w-64 shrink-0">
+    <div className="min-h-screen bg-slate-50/50 flex">
+      {/* Sidebar Static (lg+) */}
+      <aside className="hidden lg:block w-64 shrink-0 shadow-xl z-20">
         <div className="sticky top-0 h-screen">
           <SidebarBody />
         </div>
       </aside>
+
+      {/* Main Container */}
       <div className="flex-1 min-w-0 flex flex-col">
-        <header className="h-16 border-b border-border bg-card sticky top-0 z-30 flex items-center px-4 gap-3">
+        {/* Navbar header */}
+        <header className="h-16 border-b border-slate-200/60 bg-white/80 backdrop-blur-md sticky top-0 z-30 flex items-center px-6 gap-4">
           <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="lg:hidden">
-                <Menu className="h-5 w-5" />
+              <Button variant="ghost" size="icon" className="lg:hidden shrink-0">
+                <Menu className="h-5 w-5 text-slate-700" />
               </Button>
             </SheetTrigger>
-            <SheetContent side="left" className="p-0 w-72">
+            <SheetContent side="left" className="p-0 w-64 border-0">
               <SidebarBody />
             </SheetContent>
           </Sheet>
-          <div className="inline-flex flex-col ">
-            <span className="text-sm font-regular uppercase  text-gray-500">
+
+          {/* Breadcrumb Info */}
+          <div className="inline-flex flex-col text-left">
+            <span className="text-[9px] font-black uppercase tracking-[0.2em] text-rose-500">
               {title}
             </span>
-
-            <h1 className="font-extrabold capitalize text-sm leading-none text-slate-900">
+            <h1 className="font-display text-base font-black capitalize text-slate-900 tracking-tight mt-0.5">
               {displayName}
             </h1>
           </div>
-
-          {/* <div className="ml-auto flex items-center gap-2">
-            <Button asChild variant="outline" size="sm">
-              <Link to="/">View site</Link>
-            </Button>
-          </div> */}
         </header>
+
+        {/* Dynamic page transition wrapper */}
         <AnimatePresence mode="wait">
           <motion.main
             key={pathname}

@@ -6,6 +6,7 @@ import {
   CreditCard,
   Megaphone,
   FileBarChart,
+  MessageSquare,
 } from "lucide-react";
 import DashboardLayout from "./DashboardLayout";
 
@@ -31,7 +32,11 @@ const nav = [
     label: "Subscriptions",
     icon: <CreditCard className="h-4 w-4" />,
   },
-
+  {
+    to: "/admin/chat",
+    label: "Chat",
+    icon: <MessageSquare className="h-4 w-4" />,
+  },
   {
     to: "/admin/reports",
     label: "Reports",

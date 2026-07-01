@@ -22,6 +22,8 @@ import {
   Car,
   FileText,
   DollarSign,
+  Camera,
+  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -36,6 +38,14 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SEO } from "@/components/shared/SEO";
+import {
+  Breadcrumb,
+  BreadcrumbList,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
 import { AuthModal } from "@/components/shared/AuthModal";
 import { useGetVehicleDetails } from "@/hooks/dealer/useGetVehicleDetails";
 import { useGenerateLead, useGenerateView } from "@/hooks/public/useLeads";
@@ -47,6 +57,11 @@ import {
 import { useWishlist } from "@/hooks/public/useWishlist";
 import { formatINR, formatKM } from "@/utils/helpers";
 import { toast } from "sonner";
+import {
+  VehicleCard,
+  VehicleCardSkeleton,
+} from "@/components/cards/VehicleCard";
+import { useLatestVehicles } from "@/hooks/public/useHomeVehicles";
 
 const FALLBACK_IMG =
   "https://images.unsplash.com/photo-1494976388531-d1058494cdd8?w=1200&h=800&fit=crop";
@@ -65,12 +80,15 @@ export default function CarDetails() {
   } = useGetVehicleDetails(vehicleId);
   const { generateView } = useGenerateView();
   const { isSubmitting, generateLead } = useGenerateLead();
+  const { vehicles: latestVehicles, loading: latestLoading } = useLatestVehicles();
+  const latestListings = latestVehicles.filter(v => v.id !== vehicleId).slice(0, 4);
 
   const [activeImg, setActiveImg] = useState(0);
   const [activeVideo, setActiveVideo] = useState(0);
   const [showContact, setShowContact] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
   const [revealed, setRevealed] = useState(false);
+  const [galleryOpen, setGalleryOpen] = useState(false);
   const customer = useCustomer();
   const { wishlistIds, toggleWishlist: apiToggleWishlist } = useWishlist();
   const wishlisted = vehicleId ? wishlistIds.includes(vehicleId) : false;
@@ -213,9 +231,9 @@ export default function CarDetails() {
   const title = `${vehicle.registrationYear} ${vehicle.brand} ${vehicle.model} ${vehicle.variant}`;
 
   return (
-    <>
+    <div className="bg-gradient-to-b from-white via-rose-50/20 to-white dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 pb-20 pt-10">
       <SEO
-        title={`${title} — ${formatINR(vehicle.askingPrice)} | CAPL`}
+        title={`${title} — ${formatINR(vehicle.askingPrice)} | Caryanam`}
         description={
           vehicle.vehicleDescription?.slice(0, 160) ??
           `${title} available in ${vehicle.city}`
@@ -223,13 +241,26 @@ export default function CarDetails() {
         ogImage={images[0]}
       />
 
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6">
-        <button
-          onClick={() => navigate(-1)}
-          className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-5 transition-colors cursor-pointer"
-        >
-          <ArrowLeft className="h-4 w-4" /> Back to listings
-        </button>
+      <div className="mx-auto  max-w-7xl px-4 sm:px-6 lg:px-8 py-6">
+        <Breadcrumb className="mb-5">
+          <BreadcrumbList>
+            <BreadcrumbItem>
+              <BreadcrumbLink asChild>
+                <Link to="/">Home</Link>
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbLink asChild>
+                <Link to="/cars">Cars</Link>
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbPage>{title}</BreadcrumbPage>
+            </BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
 
         <div className="grid lg:grid-cols-[1fr_380px] gap-8">
           {/* Left column */}
@@ -241,7 +272,8 @@ export default function CarDetails() {
                 initial={{ opacity: 0.6, scale: 0.99 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.25 }}
-                className="relative aspect-[16/10] rounded-2xl overflow-hidden bg-muted shadow-card group"
+                onClick={() => setGalleryOpen(true)}
+                className="relative aspect-[16/10] rounded-2xl overflow-hidden bg-muted shadow-card group cursor-pointer"
               >
                 <img
                   src={images[activeImg]}
@@ -254,14 +286,20 @@ export default function CarDetails() {
                 {images.length > 1 && (
                   <>
                     <button
-                      onClick={prevImg}
-                      className="absolute left-3 top-1/2 -translate-y-1/2 h-9 w-9 rounded-full bg-black/50 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        prevImg();
+                      }}
+                      className="absolute left-3 top-1/2 -translate-y-1/2 h-9 w-9 rounded-full bg-black/50 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
                     >
                       <ChevronLeft className="h-5 w-5" />
                     </button>
                     <button
-                      onClick={nextImg}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 h-9 w-9 rounded-full bg-black/50 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        nextImg();
+                      }}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 h-9 w-9 rounded-full bg-black/50 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
                     >
                       <ChevronRight className="h-5 w-5" />
                     </button>
@@ -279,30 +317,49 @@ export default function CarDetails() {
                     </Badge>
                   )}
                 </div>
-                <div className="absolute bottom-4 right-4 px-2.5 py-1 rounded-full bg-black/60 text-white text-xs font-medium">
-                  {activeImg + 1} / {images.length}
-                </div>
+                {images.length > 1 && (
+                  <div className="absolute bottom-4 right-4 px-3 py-1.5 rounded-lg bg-black/75 text-white text-xs font-black flex items-center gap-1.5 backdrop-blur-sm select-none">
+                    <Camera className="h-3.5 w-3.5" />
+                    {activeImg + 1} / {images.length}
+                  </div>
+                )}
               </motion.div>
 
               {images.length > 1 && (
-                <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-thin">
-                  {images.map((src, i) => (
-                    <button
-                      key={i}
-                      onClick={() => setActiveImg(i)}
-                      className={`shrink-0 aspect-[4/3] w-20 rounded-lg overflow-hidden border-2 transition-all ${activeImg === i ? "border-accent" : "border-transparent opacity-60 hover:opacity-100"}`}
-                    >
-                      <img
-                        src={src}
-                        alt=""
-                        className="h-full w-full object-cover"
-                        onError={(e) => {
-                          (e.currentTarget as HTMLImageElement).src =
-                            FALLBACK_IMG;
+                <div className="grid grid-cols-6 gap-2 mt-2">
+                  {images.slice(0, 6).map((src, i) => {
+                    const isLast = i === Math.min(images.length, 6) - 1;
+                    const showOverlay = isLast && (images.length > 6 || images.length > 1);
+                    return (
+                      <button
+                        key={i}
+                        onClick={() => {
+                          if (showOverlay) {
+                            setGalleryOpen(true);
+                          } else {
+                            setActiveImg(i);
+                          }
                         }}
-                      />
-                    </button>
-                  ))}
+                        className={`relative aspect-[4/3] rounded-lg overflow-hidden border-2 transition-all cursor-pointer ${
+                          activeImg === i ? "border-rose-900" : "border-transparent opacity-85 hover:opacity-100"
+                        }`}
+                      >
+                        <img
+                          src={src}
+                          alt=""
+                          className="h-full w-full object-cover"
+                          onError={(e) => {
+                            (e.currentTarget as HTMLImageElement).src = FALLBACK_IMG;
+                          }}
+                        />
+                        {showOverlay && (
+                          <div className="absolute inset-0 bg-black/60 flex items-center justify-center text-white text-[10px] font-black uppercase tracking-wider">
+                            View All
+                          </div>
+                        )}
+                      </button>
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -653,7 +710,7 @@ export default function CarDetails() {
             <Card>
               <CardContent className="p-6 space-y-2 text-sm">
                 <div className="flex items-center gap-2 text-success">
-                  <BadgeCheck className="h-4 w-4" /> Verified by CAPL
+                  <BadgeCheck className="h-4 w-4" /> Verified by Caryanam
                 </div>
                 <div className="flex items-center gap-2 text-success">
                   <Shield className="h-4 w-4" /> Document check passed
@@ -665,6 +722,39 @@ export default function CarDetails() {
             </Card>
           </aside>
         </div>
+
+        {/* Latest Listings Section */}
+        {latestListings.length > 0 && (
+          <div className="mt-16 pt-10 border-t border-slate-200 dark:border-slate-800/50">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2 className="font-display text-xl sm:text-2xl font-black">Latest Listings</h2>
+                <p className="text-xs text-muted-foreground font-medium mt-0.5">Fresh inventory updated daily</p>
+              </div>
+              <Link to="/cars" className="text-xs font-bold text-rose-900 hover:underline">
+                View All
+              </Link>
+            </div>
+            {latestLoading ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <VehicleCardSkeleton key={i} />
+                ))}
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                {latestListings.map((v) => (
+                  <VehicleCard
+                    key={v.id}
+                    vehicle={v}
+                    isLoggedIn={!!customer}
+                    onWishlistRequireLogin={() => setAuthOpen(true)}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Contact Dealer Dialog */}
@@ -726,7 +816,79 @@ export default function CarDetails() {
         onOpenChange={setAuthOpen}
         onSuccess={handleAuthSuccess}
       />
-    </>
+
+      {/* Full Image Gallery Lightbox Modal */}
+      {galleryOpen && (
+        <div className="fixed inset-0 z-50 bg-black/95 flex flex-col justify-between py-8 px-4 select-none">
+          {/* Close Button */}
+          <button
+            onClick={() => setGalleryOpen(false)}
+            className="absolute top-4 right-4 text-white/70 hover:text-white transition-colors p-2 cursor-pointer z-50 bg-black/40 rounded-full hover:bg-black/60"
+          >
+            <X className="h-6 w-6" />
+          </button>
+
+          {/* Main Viewport Area */}
+          <div className="flex-1 flex items-center justify-center relative w-full max-w-5xl mx-auto">
+            {/* Left Arrow */}
+            <button
+              onClick={(e) => { e.stopPropagation(); prevImg(); }}
+              className="absolute left-2 md:left-4 z-15 w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all cursor-pointer border border-white/5"
+            >
+              <ChevronLeft className="h-6 w-6" />
+            </button>
+
+            {/* Large Active Image */}
+            <img
+              src={images[activeImg]}
+              alt={title}
+              className="max-h-[65vh] max-w-full object-contain rounded-lg shadow-2xl"
+              onError={(e) => {
+                (e.currentTarget as HTMLImageElement).src = FALLBACK_IMG;
+              }}
+            />
+
+            {/* Right Arrow */}
+            <button
+              onClick={(e) => { e.stopPropagation(); nextImg(); }}
+              className="absolute right-2 md:right-4 z-15 w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all cursor-pointer border border-white/5"
+            >
+              <ChevronRight className="h-6 w-6" />
+            </button>
+          </div>
+
+          {/* Bottom Controls & Thumbnails */}
+          <div className="space-y-4 w-full max-w-4xl mx-auto text-center">
+            {/* Counter */}
+            <div className="inline-block bg-white/10 border border-white/5 text-white text-xs font-bold px-4.5 py-2 rounded-full">
+              {activeImg + 1} / {images.length}
+            </div>
+
+            {/* Thumbnails Strip */}
+            <div className="flex gap-2 overflow-x-auto justify-center pb-1 scrollbar-thin">
+              {images.map((src, i) => (
+                <button
+                  key={i}
+                  onClick={() => setActiveImg(i)}
+                  className={`shrink-0 aspect-[4/3] w-16 rounded-lg overflow-hidden border-2 transition-all cursor-pointer ${
+                    activeImg === i ? "border-rose-900 scale-105" : "border-transparent opacity-50 hover:opacity-85"
+                  }`}
+                >
+                  <img
+                    src={src}
+                    alt=""
+                    className="h-full w-full object-cover"
+                    onError={(e) => {
+                      (e.currentTarget as HTMLImageElement).src = FALLBACK_IMG;
+                    }}
+                  />
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 

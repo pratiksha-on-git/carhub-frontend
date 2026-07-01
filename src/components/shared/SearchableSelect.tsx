@@ -71,8 +71,10 @@ export function SearchableSelect({
         </Button>
       </PopoverTrigger>
       <PopoverContent
+        align="start"
+        avoidCollisions={false}
         className={cn(
-          "p-0 rounded-2xl shadow-lg border border-slate-100 bg-white z-50",
+          "p-0 rounded-2xl shadow-lg border border-slate-100 bg-white z-50 w-[var(--radix-popover-trigger-width)]",
           className,
         )}
       >
@@ -83,7 +85,11 @@ export function SearchableSelect({
             onValueChange={setSearch}
             className="border-0 focus:ring-0 text-sm h-11"
           />
-          <CommandList className="max-h-60 overflow-y-auto p-1">
+          <CommandList
+            className="max-h-60 overflow-y-auto p-1"
+            onWheel={(e) => e.stopPropagation()}
+            onTouchMove={(e) => e.stopPropagation()}
+          >
             {filteredOptions.length === 0 && !allowCustom && (
               <div className="text-center py-6 text-sm text-slate-500">
                 No results found.

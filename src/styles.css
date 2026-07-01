@@ -76,38 +76,46 @@
 
 :root {
   --radius: 0.625rem;
-  /* CAPL design system — premium automotive marketplace */
-  --background: oklch(0.985 0.003 247); /* #F8FAFC */
-  --foreground: oklch(0.18 0.02 264); /* #111827 */
-  --card: oklch(1 0 0); /* #FFFFFF */
+  /* Caryanam design system — premium automotive marketplace */
+  --background: oklch(96.9% 0.015 12.422);
+  /* #F8FAFC */
+  --foreground: oklch(0.18 0.02 264);
+  /* #111827 */
+  --card: oklch(1 0 0);
+  /* #FFFFFF */
   --card-foreground: oklch(0.18 0.02 264);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.18 0.02 264);
   /* Primary = deep slate #0F172A */
-  --primary: oklch(0.205 0.04 265);
+  --primary: oklch(45.5% 0.188 13.697);
   --primary-foreground: oklch(0.985 0.003 247);
   /* Secondary = slate-800 #1E293B */
   --secondary: oklch(0.27 0.04 263);
   --secondary-foreground: oklch(0.985 0.003 247);
   --muted: oklch(0.96 0.008 248);
-  --muted-foreground: oklch(0.5 0.02 257); /* #6B7280 */
-  /* Accent = electric blue #2563EB */
-  --accent: oklch(0.555 0.21 263);
+  --muted-foreground: oklch(0.5 0.02 257);
+  /* #6B7280 */
+  /* Accent = oklch(74% 0.238 322.16) */
+  --accent: oklch(64.5% 0.246 16.439);
   --accent-foreground: oklch(0.99 0 0);
-  --destructive: oklch(0.58 0.22 27); /* #DC2626 */
+  --destructive: oklch(0.58 0.22 27);
+  /* #DC2626 */
   --destructive-foreground: oklch(0.99 0 0);
-  --success: oklch(0.62 0.18 145); /* #16A34A */
+  --success: oklch(0.62 0.18 145);
+  /* #16A34A */
   --success-foreground: oklch(0.99 0 0);
-  --warning: oklch(0.78 0.16 70); /* #F59E0B */
+  --warning: oklch(0.78 0.16 70);
+  /* #F59E0B */
   --warning-foreground: oklch(0.2 0.04 265);
-  --border: oklch(0.92 0.008 255); /* #E5E7EB */
+  --border: oklch(0.92 0.008 255);
+  /* #E5E7EB */
   --input: oklch(0.92 0.008 255);
-  --ring: oklch(0.555 0.21 263);
-  --brand-50: oklch(0.97 0.02 263);
-  --brand-100: oklch(0.93 0.04 263);
-  --brand-500: oklch(0.555 0.21 263);
-  --brand-600: oklch(0.495 0.22 263);
-  --brand-700: oklch(0.43 0.2 263);
+  --ring: oklch(62.3% 0.214 259.815);
+  --brand-50: #0f172a;
+  --brand-100: #0f172a;
+  --brand-500: #e11d48;
+  --brand-600: #e11d48;
+  --brand-700: #e11d48;
   --ink-900: oklch(0.205 0.04 265);
   --ink-800: oklch(0.27 0.04 263);
   --chart-1: oklch(0.646 0.222 41.116);
@@ -144,16 +152,16 @@
   --destructive-foreground: oklch(0.984 0.003 247.858);
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.551 0.027 264.364);
+  --ring: oklch(0.551 0.027 322.16);
   --success: oklch(0.65 0.18 145);
   --success-foreground: oklch(0.99 0 0);
   --warning: oklch(0.78 0.16 70);
   --warning-foreground: oklch(0.2 0.04 265);
-  --brand-50: oklch(0.3 0.05 263);
-  --brand-100: oklch(0.35 0.08 263);
-  --brand-500: oklch(0.6 0.21 263);
-  --brand-600: oklch(0.55 0.22 263);
-  --brand-700: oklch(0.48 0.2 263);
+  --brand-50: #e11d48;
+  --brand-100: #e11d48;
+  --brand-500: #e11d48;
+  --brand-600: #e11d48;
+  --brand-700: #e11d48;
   --ink-900: oklch(0.13 0.04 264);
   --ink-800: oklch(0.2 0.04 263);
   --chart-1: oklch(0.488 0.243 264.376);
@@ -182,6 +190,7 @@
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
   }
+
   h1,
   h2,
   h3,
@@ -194,29 +203,35 @@
 }
 
 @utility gradient-primary {
-  background-image: linear-gradient(135deg, #0f172a 0%, #2563eb 100%);
+  background-image: linear-gradient(135deg, #e11d48 0%, #0f172a 100%);
 }
+
 .hover\:gradient-primary-hover:hover {
-  background-image: linear-gradient(135deg, #1e293b 0%, #3b82f6 100%);
+  background-image: linear-gradient(135deg, #f43f5e 0%, #0f172a 100%);
 }
+
 @utility gradient-premium {
-  background-image: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+  background-image: linear-gradient(135deg, #e11d48 0%, #0f172a 100%);
 }
+
 @utility text-gradient-primary {
-  background-image: linear-gradient(135deg, #0f172a 0%, #2563eb 100%);
+  background-image: linear-gradient(135deg, #e11d48 0%, #0f172a 100%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
 }
+
 @utility glass {
   background: color-mix(in oklab, white 70%, transparent);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border: 1px solid color-mix(in oklab, white 30%, transparent);
 }
+
 @utility shadow-premium {
   box-shadow: 0 10px 30px -12px color-mix(in oklab, #0f172a 25%, transparent);
 }
+
 @utility shadow-card {
   box-shadow:
     0 1px 2px rgba(15, 23, 42, 0.04),

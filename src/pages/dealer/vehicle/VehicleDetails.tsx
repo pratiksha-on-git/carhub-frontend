@@ -1,10 +1,11 @@
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   ArrowLeft,
+  ChevronRight,
   Car,
   Fuel,
   Settings,
@@ -64,15 +65,28 @@ export default function DealerVehicleDetails() {
   const videos: string[] = vehicle.videos ?? [];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 ">
       {/* Back */}
-      <Button
-        variant="ghost"
-        className="gap-2 pl-0 cursor-pointer"
-        onClick={() => navigate(-1)}
-      >
-        <ArrowLeft className="h-4 w-4 ml-3" /> Back to Inventory
-      </Button>
+      {/* Breadcrumbs */}
+      <div className="flex items-center gap-3">
+        <Button
+          variant="outline"
+          size="icon"
+          className="h-8 w-8 rounded-xl bg-white border-slate-200 hover:bg-slate-50 hover:text-slate-900 transition-colors shrink-0 cursor-pointer"
+          onClick={() => navigate(-1)}
+        >
+          <ArrowLeft className="h-4 w-4" />
+        </Button>
+        <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-400 select-none">
+          <Link to="/dealer/vehicles" className="hover:text-rose-900 transition-colors cursor-pointer">
+            Vehicles
+          </Link>
+          <ChevronRight size={12} className="text-slate-300" />
+          <span className="text-slate-900 font-black truncate max-w-[200px]">
+            {vehicle.brand} {vehicle.model}
+          </span>
+        </div>
+      </div>
 
       <div className="grid lg:grid-cols-2 gap-6">
         {/* Images */}
@@ -245,7 +259,7 @@ function SpecBox({
   value?: string | number;
 }) {
   return (
-    <div className="bg-slate-50 rounded-xl p-3 flex items-center gap-3">
+    <div className="bg-white rounded-xl p-3 flex items-center gap-3">
       <div className="text-primary shrink-0">{icon}</div>
       <div>
         <div className="text-xs text-muted-foreground">{label}</div>

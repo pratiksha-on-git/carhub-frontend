@@ -96,12 +96,14 @@ export default function AdminDashboard() {
       label: "Total Dealers",
       value: dealersData?.totalDealers,
       loading: loadingDealers,
+      yellow: true
     },
     {
       icon: <CarFront className="h-5 w-5" />,
       label: "Total Vehicles",
       value: vehiclesData?.totalVehicles,
       loading: loadingVehicles,
+      blue: true
     },
     {
       icon: <Clock className="h-5 w-5" />,
@@ -115,6 +117,7 @@ export default function AdminDashboard() {
       label: "Total Leads",
       value: leadsData?.totalCustomerLeads,
       loading: loadingLeads,
+      purple: true,
     },
     {
       icon: <IndianRupee className="h-5 w-5" />,
@@ -137,10 +140,16 @@ export default function AdminDashboard() {
             <CardContent className="p-5">
               <div
                 className={`w-10 h-10 grid place-items-center rounded-xl mb-3 ${s.accent
-                    ? "bg-warning text-warning-foreground"
-                    : s.green
-                      ? "bg-emerald-500 text-white"
-                      : "gradient-primary text-white"
+                  ? "bg-rose-500 text-white"
+                  : s.green
+                    ? "bg-emerald-500 text-white"
+                    : s.purple
+                      ? "bg-purple-500 text-white"
+                      : s.blue
+                        ? "bg-blue-500 text-white"
+                        : s.yellow
+                          ? "bg-yellow-500 text-white"
+                          : "gradient-primary text-white"
                   }`}
               >
                 {s.icon}
